@@ -5,10 +5,8 @@ import { initialSettingsStates } from '../settingsDefintions';
 export const initialSiteState = {
   id: '',
   index: 0,
-  site: {
-    name: null,
-    url: null,
-  },
+  name: '',
+  url: '',
   keywords: {
     positive: [],
     negative: [],

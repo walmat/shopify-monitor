@@ -1,4 +1,32 @@
+@import '../colors.scss';
+
 .home {
     height: 100%;
     width: 100%;
+
+    .announcement {
+        padding-bottom: 2.5%;
+
+        .expand {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+    }
+
+    .sites {
+        background: $accent2;
+        height: 100%;
+        border: none;
+        border-radius: 20px;
+
+        &--center {
+            text-align: center;
+            color: $header;
+        }
+
+        &--left {
+            color: $header;
+            text-align: left;
+        }
+    }
 }
