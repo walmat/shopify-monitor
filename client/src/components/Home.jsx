@@ -27,7 +27,7 @@ const Message = styled.span`
 class Home extends Component {
   componentDidMount() {}
 
-  renderTableRow() {
+  renderTableRows() {
     const { sites } = this.props;
     return sites.map(site => <SiteRow key={site.id} site={site} />);
   }
@@ -48,24 +48,32 @@ class Home extends Component {
             </MessageBox>
             </Col>
           </Row>
-          <Row className="sites">
-            <Col sm={1} className="sites--center">
-              #
-            </Col>
-            <Col sm={2} className="sites--center">
-              Site
-            </Col>  
-            <Col sm={3} className="sites--center">
-              Keywords
-            </Col>
-            <Col sm={3} className="sites--center">
-              Proxy
-            </Col>
-            <Col sm={3} className="sites--center">
-              Products Found
-            </Col>
-          </Row>
-          {this.renderTableRow()}
+          <Container className="table--container">
+            <Row className="table--header">
+              <Col sm={1} className="table--header__center">
+                <p>#</p>
+              </Col>
+              <Col sm={2} className="table--header__center">
+                <p>Site</p>
+              </Col>  
+              <Col sm={3} className="table--header__center">
+                <p>Keywords</p>
+              </Col>
+              <Col sm={2} className="table--header__center">
+                <p>Proxy</p>
+              </Col>
+              <Col sm={2} className="table--header__center">
+                <p>Products Found</p>
+              </Col>
+              <Col sm={2} className="table--header__center">
+                <p>Last Updated</p>
+              </Col>
+            </Row>
+            {this.renderTableRows()}
+            <Row className="table--footer">
+              <Col sm={12} className="table--footer__center"></Col>
+            </Row>
+          </Container>
         </Container>
       </div>
     );

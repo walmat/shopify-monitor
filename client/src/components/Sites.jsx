@@ -1,22 +1,36 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { Component } from 'react';
+import { Container, Row, Col } from 'react-grid-system';
+import { connect } from 'react-redux';
+import siteDefns from '../utils/definitions/siteDefinitions';
+import settingsDefns from '../utils/definitions/settingsDefintions';
 
-const MessageBox = styled.div`
-  margin: 0 auto;
-  margin-top: 30px;
-  padding: 40px;
-  text-align: center;
-  background-color: #EDBCC6;
-  border-radius: 20px;
-  width: 100%;
-`;
+class Sites extends Component {
 
-const Sites = () => (
-  <div className="sites">
-    <div className="container">
-      <MessageBox>This is the sites page.</MessageBox>
-    </div>
-  </div>
-);
+  render() {
+    return (
+      <div className="sites">
+        <Container>
+          <Row></Row>
+        </Container>
+      </div>
+    );
+  }
+}
 
-export default Sites;
+Sites.propTypes = {
+  site: siteDefns.site.isRequired,
+  sites: siteDefns.siteList.isRequired,
+  settings: settingsDefns.settings.isRequired,
+};
+
+function mapStateToProps(state) {
+  const { sites, settings } = state;
+  return {
+    sites,
+    settings,
+  };
+}
+
+export const mapDispatchToProps = dispatch => ({});
+
+export default connect(mapStateToProps, mapDispatchToProps)(Sites);
