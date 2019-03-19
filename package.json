@@ -6,6 +6,7 @@
   "scripts": {
     "build": "yarn workspaces run build",
     "lint": "yarn workspaces run lint",
+    "lint:fix": "yarn workspaces run lint:fix",
     "test": "yarn workspaces run test"
   },
   "workspaces": [

@@ -13,7 +13,7 @@ module.exports = {
       files: ["*.js", "*.jsx", "*.es", "*.es6", "*.mjs"],
       options: {
         printWidth: 100,
-        parser: "babylon"
+        parser: "babel"
       }
     },
     {
