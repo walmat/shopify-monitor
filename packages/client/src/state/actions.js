@@ -30,12 +30,7 @@ export const globalActions = {
 //   LOCATION_FIELDS,
 // } = proxies;
 
-export const {
-  sitesActions,
-  mapSitesFieldsToKey,
-  SITES_ACTIONS,
-  SITES_FIELDS,
-} = sites;
+export const { sitesActions, mapSitesFieldsToKey, SITES_ACTIONS, SITES_FIELDS } = sites;
 
 // export const {
 //   serverActions,
@@ -52,9 +47,4 @@ export const {
   SETTINGS_FIELDS,
 } = settings;
 
-export const {
-  navbarActions,
-  mapActionsToRoutes,
-  NAVBAR_ACTIONS,
-  ROUTES,
-} = navbar;
+export const { navbarActions, mapActionsToRoutes, NAVBAR_ACTIONS, ROUTES } = navbar;

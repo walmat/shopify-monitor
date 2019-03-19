@@ -15,7 +15,9 @@ import { ROUTES } from './state/actions';
 export class App extends PureComponent {
   render() {
     const { store } = this.props;
-    const { navbar: { location: stateLocation } } = store.getState();
+    const {
+      navbar: { location: stateLocation },
+    } = store.getState();
     const windowLocation = window.location.pathname;
     let redirectRoute = ROUTES.HOME;
     if (windowLocation !== stateLocation) {

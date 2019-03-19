@@ -5,12 +5,11 @@ import siteDefns from '../utils/definitions/siteDefinitions';
 import settingsDefns from '../utils/definitions/settingsDefintions';
 
 class Sites extends Component {
-
   render() {
     return (
       <div className="sites">
         <Container>
-          <Row></Row>
+          <Row />
         </Container>
       </div>
     );
@@ -33,4 +32,7 @@ function mapStateToProps(state) {
 
 export const mapDispatchToProps = dispatch => ({});
 
-export default connect(mapStateToProps, mapDispatchToProps)(Sites);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Sites);

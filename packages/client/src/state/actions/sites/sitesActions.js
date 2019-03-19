@@ -14,7 +14,7 @@ export const SITES_ACTIONS = {
 };
 
 // Private API Requests
-const _addSiteRequest = async (site) => {
+const _addSiteRequest = async site => {
   // TODO: Replace this with an actual API call
   const copy = JSON.parse(JSON.stringify(site));
   return { site: copy };
@@ -74,7 +74,7 @@ const _startSiteRequest = async (site, proxies = []) => {
   }
 };
 
-const _stopSiteRequest = async (site) => {
+const _stopSiteRequest = async site => {
   if (site.status === 'stopped') {
     throw new Error('Already stopped');
   } else {
@@ -111,7 +111,7 @@ const destroySite = (site, type) => dispatch =>
 
 const updateSite = (id, site) => (dispatch, getState) =>
   _updateSiteRequest(id, site).then(
-    (response) => {
+    response => {
       dispatch(_updateSite(response));
       const state = getState();
       if (state.selectedSite && state.selectedSite.id === response.id) {
@@ -133,7 +133,7 @@ const clearEdits = (id, site) => {
   copy.edits = null;
   return (dispatch, getState) =>
     _updateSiteRequest(id, copy).then(
-      (response) => {
+      response => {
         dispatch(_updateSite(response));
         const state = getState();
         if (state.selectedSite && state.selectedSite.id === response.id) {

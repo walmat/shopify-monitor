@@ -7,7 +7,7 @@ import { ROUTES } from '../state/actions';
 
 const Navbar = styled.div`
   background: #161318 !important;
-  color: #F5F5F5;
+  color: #f5f5f5;
 `;
 
 const LogoImage = styled.img`

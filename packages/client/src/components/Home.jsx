@@ -14,14 +14,14 @@ const MessageBox = styled.div`
   margin-top: 30px;
   padding: 20px;
   text-align: center;
-  background-color: #B8D9D2;
+  background-color: #b8d9d2;
   border-radius: 20px;
   width: 100%;
 `;
 
 const Message = styled.span`
   font-weight: 700;
-  color: #EF415E;
+  color: #ef415e;
 `;
 
 class Home extends Component {
@@ -43,9 +43,17 @@ class Home extends Component {
           <Row className="announcement">
             <Col sm={12} className="expand">
               <MessageBox>
-                Monitoring: <Message>{`${siteListTotalValue} ${siteListTotalValue === 1 ? 'site' : 'sites '}`}</Message>
-                every <Message>{`${monitorDelay}`}</Message> ms
-            </MessageBox>
+                Monitoring:{' '}
+                <Message>
+                  {`${siteListTotalValue} ${
+                  siteListTotalValue === 1 ? 'site' : 'sites '
+                </Message>
+                every 
+{' '}
+<Message>{`${monitorDelay}`}</Message>
+                {' '}
+ms
+              </MessageBox>
             </Col>
           </Row>
           <Container className="table--container">
@@ -55,7 +63,7 @@ class Home extends Component {
               </Col>
               <Col sm={2} className="table--header__center">
                 <p>Site</p>
-              </Col>  
+              </Col>
               <Col sm={3} className="table--header__center">
                 <p>Keywords</p>
               </Col>
@@ -71,7 +79,7 @@ class Home extends Component {
             </Row>
             {this.renderTableRows()}
             <Row className="table--footer">
-              <Col sm={12} className="table--footer__center"></Col>
+              <Col sm={12} className="table--footer__center" />
             </Row>
           </Container>
         </Container>
@@ -95,4 +103,7 @@ function mapStateToProps(state) {
 
 export const mapDispatchToProps = dispatch => ({});
 
-export default connect(mapStateToProps, mapDispatchToProps)(Home);
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Home);

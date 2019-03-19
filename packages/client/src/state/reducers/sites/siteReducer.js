@@ -2,7 +2,7 @@ import { SITES_ACTIONS, SITES_FIELDS, mapSitesFieldsToKey } from '../../actions'
 import { initialSitesStates } from '../../../utils/definitions/siteDefinitions';
 
 export function siteReducer(state = initialSitesStates.site, action) {
-  let change = {};
+  const change = {};
   if (action.type === SITES_ACTIONS.EDIT) {
     switch (action.field) {
       case SITES_FIELDS.EDIT_SITE: {

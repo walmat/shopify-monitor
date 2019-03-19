@@ -26,7 +26,7 @@ export const mapActionsToRoutes = {
 const _routeAction = type => makeActionCreator(type, 'history');
 
 // Public General Route Action
-const route = (type, history) => (dispatch) => {
+const route = (type, history) => dispatch => {
   let _type = type;
   if (!mapActionsToRoutes[type]) {
     _type = NAVBAR_ACTIONS.ROUTE_HOME;

@@ -6,7 +6,7 @@ const MessageBox = styled.div`
   margin-top: 30px;
   padding: 40px;
   text-align: center;
-  background-color: #EDBCC6;
+  background-color: #edbcc6;
   border-radius: 20px;
   width: 100%;
 `;

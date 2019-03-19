@@ -18,9 +18,9 @@ class SiteRow extends Component {
         </Col>
         <Col sm={2} className="site-row--center">
           <p>{site.name}</p>
-        </Col>  
+        </Col>
         <Col sm={3} className="site-row--center">
-          <p>{keywords.map(k => k + ' ')}</p>
+          <p>{keywords.map(k => `${k} `)}</p>
         </Col>
         <Col sm={2} className="site-row--center">
           <p>None</p>
@@ -41,9 +41,12 @@ SiteRow.propTypes = {
 };
 
 export const mapStateToProps = (state, ownProps) => ({
-    site: ownProps.site,
-  });
-  
-  export const mapDispatchToProps = dispatch => ({});
+  site: ownProps.site,
+});
 
-export default connect(mapStateToProps, mapDispatchToProps)(SiteRow);
+export const mapDispatchToProps = dispatch => ({});
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(SiteRow);
