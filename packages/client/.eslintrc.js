@@ -2,6 +2,7 @@ module.exports = {
   env: {
     browser: true,
   },
+  extends: ['airbnb', 'prettier'],
   rules: {
     'react/jsx-filename-extension': [1, { extensions: ['.js', '.jsx'] }],
     'jsx-a11y/anchor-is-valid': [
@@ -12,5 +13,9 @@ module.exports = {
         aspects: ['noHref', 'invalidHref', 'preferButton'],
       },
     ],
+    'no-underscore-dangle': 'off',
+  },
+  parserOptions: {
+    ecmaFeatures: { jsx: true },
   },
 };
