@@ -1,0 +1,34 @@
+@import '../colors';
+
+.proxies {
+  height: 100%;
+  width: 100%;
+
+  .announcement {
+    padding-bottom: 2.5%;
+    margin: 0 !important;
+
+    .expand {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+  }
+
+  &--container {
+    width: 100% !important;
+    height: 100% !important;
+    padding: 7.5% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: scroll !important;
+    border-radius: 20px 20px 0 0 !important;
+  }
+
+  &--list {
+    width: 100%;
+    height: 100%;
+    padding: 1.5% !important;
+    background: $tableHeader;
+    outline: none;
+  }
+}

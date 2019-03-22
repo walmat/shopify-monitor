@@ -20,6 +20,7 @@ export const initialState = {
   newSite: initialSitesStates.site,
   selectedSite: initialSitesStates.site,
   settings: initialSettingsStates.settings,
+  proxies: initialSettingsStates.proxies,
 };
 
 const topLevelReducer = (state = initialState, action) => {

@@ -4,7 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "node server.js",
+    "start": "nodemon src/server.js",
     "dev": "concurrently -c blue.bold,magenta --kill-others \"nodemon server.js\" \"cd client && yarn start\"",
     "install-dev": "yarn && cd client && yarn && cd ..",
     "heroku-postbuild": "cd client && yarn --production=false && yarn run build",

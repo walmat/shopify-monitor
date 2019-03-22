@@ -14,7 +14,7 @@ export default function configureStore() {
     composeEnhancers(
       // TODO - import middleware before the thunk
       applyMiddleware(thunk),
-      persistState(),
+      // persistState(),
     ),
   );
 }

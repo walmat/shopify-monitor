@@ -1,7 +1,9 @@
 import React, { Component } from 'react';
+import { Link } from 'react-router-dom';
 import { Container, Row, Col } from 'react-grid-system';
 import { connect } from 'react-redux';
 import styled from 'styled-components';
+import { ROUTES } from '../state/actions';
 import siteDefns from '../utils/definitions/siteDefinitions';
 import settingsDefns from '../utils/definitions/settingsDefintions';
 
@@ -25,8 +27,6 @@ const Message = styled.span`
 `;
 
 class Home extends Component {
-  componentDidMount() {}
-
   renderTableRows() {
     const { sites } = this.props;
     return sites.map(site => <SiteRow key={site.id} site={site} />);
@@ -36,23 +36,25 @@ class Home extends Component {
     const { sites, settings } = this.props;
     const { monitorDelay } = settings;
     const siteListTotalValue = sites.length || 0;
-    console.log(this.props);
     return (
       <div className="home">
         <Container>
           <Row className="announcement">
             <Col sm={12} className="expand">
               <MessageBox>
-                Monitoring:{' '}
+                Monitoring:
                 <Message>
-                  {`${siteListTotalValue} ${
-                  siteListTotalValue === 1 ? 'site' : 'sites '
+                  {` `}
+                  {`${siteListTotalValue} ${siteListTotalValue === 1 ? ' site ' : ' sites '}`}
                 </Message>
-                every 
-{' '}
-<Message>{`${monitorDelay}`}</Message>
-                {' '}
-ms
+                {` `}
+                every
+                {` `}
+                <Message>{`${monitorDelay}`}</Message>
+                {` `}
+                ms
+                {` `}
+                {siteListTotalValue === 0 ? <Link to={ROUTES.SITES}>Add some now?</Link> : null}
               </MessageBox>
             </Col>
           </Row>
