@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "start": "node src/server.js",
+    "build": "babel src -d build",
     "dev": "concurrently -c blue.bold,magenta --kill-others \"nodemon server.js\" \"cd client && yarn start\"",
     "install-dev": "yarn workspaces install",
     "heroku-postbuild": "yarn --production=false && yarn workspaces run build",
