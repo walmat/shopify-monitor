@@ -1,0 +1,36 @@
+{
+  "name": "client",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "axios": "^0.17.1",
+    "node-sass": "^4.11.0",
+    "prop-types": "^15.6.0",
+    "react": "^16.2.0",
+    "react-dom": "^16.2.0",
+    "react-grid-system": "^4.4.3",
+    "react-redux": "^5.0.6",
+    "react-router-dom": "^4.2.2",
+    "react-scripts": "2.1.8",
+    "redux": "^3.7.2",
+    "redux-localstorage": "^0.4.1",
+    "redux-thunk": "^2.2.0",
+    "shortid": "^2.2.14",
+    "styled-components": "^2.4.0"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test --env=jsdom",
+    "eject": "react-scripts eject",
+    "lint": "eslint --ext js,jsx src/",
+    "lint:fix": "eslint --fix --ext js,jsx src/"
+  },
+  "proxy": "http://localhost:5000",
+  "browserslist": [
+    ">0.2%",
+    "not dead",
+    "not ie <= 11",
+    "not op_mini all"
+  ]
+}

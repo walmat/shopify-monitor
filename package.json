@@ -1,28 +1,37 @@
 {
-  "name": "server",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
+  "name": "root",
+  "description": "root level for the shopify monitor",
+  "version": "0.1.0",
+  "private": true,
   "scripts": {
-    "start": "node server.js",
-    "dev": "concurrently -c blue.bold,magenta --kill-others \"nodemon server.js\" \"cd client && yarn start\"",
-    "install-dev": "yarn && cd client && yarn && cd ..",
-    "heroku-postbuild": "cd client && yarn --production=false && yarn run build"
+    "build": "yarn workspaces run build",
+    "lint": "yarn workspaces run lint",
+    "lint:fix": "yarn workspaces run lint:fix",
+    "test": "yarn workspaces run test"
   },
-  "dependencies": {
-    "express": "^4.16.4",
-    "morgan": "^1.9.1",
-    "react-grid-system": "^4.4.3",
-    "shortid": "^2.2.14"
-  },
+  "workspaces": [
+    "packages/*"
+  ],
   "devDependencies": {
-    "concurrently": "^4.1.0",
-    "eslint": "5.12.0",
+    "@babel/cli": "^7.2.0",
+    "@babel/core": "^7.2.0",
+    "@babel/node": "^7.2.0",
+    "@babel/plugin-proposal-export-default-from": "^7.2.0",
+    "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
+    "@babel/plugin-proposal-function-bind": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
+    "@babel/preset-react": "^7.0.0",
+    "babel-core": "^7.0.0-0",
+    "babel-jest": "^23.6.0",
+    "eslint": "5.6.0",
     "eslint-config-airbnb": "^17.1.0",
-    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-config-prettier": "^4.1.0",
     "eslint-plugin-import": "^2.16.0",
     "eslint-plugin-jsx-a11y": "^6.2.1",
-    "eslint-plugin-react": "^7.12.4",
-    "nodemon": "^1.18.10"
+    "eslint-plugin-prettier": "^3.0.0",
+    "eslint-plugin-react": "^7.11.1",
+    "jest": "^23.6.0",
+    "prettier": "^1.16.4",
+    "yarn": "^1.12.3"
   }
 }

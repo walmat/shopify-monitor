@@ -1,0 +1,26 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "node src/server.js",
+    "build": "babel src -d build",
+    "dev": "concurrently -c blue.bold,magenta --kill-others \"nodemon server.js\" \"cd client && yarn start\"",
+    "install-dev": "yarn workspaces install",
+    "heroku-postbuild": "yarn --production=false && yarn workspaces run build",
+    "lint": "eslint --ext js src/",
+    "lint:fix": "eslint --fix --ext js src/"
+  },
+  "dependencies": {
+    "express": "^4.16.4",
+    "morgan": "^1.9.1",
+    "react-grid-system": "^4.4.3",
+    "shortid": "^2.2.14"
+  },
+  "devDependencies": {
+    "concurrently": "^4.1.0",
+    "nodemon": "^1.18.10"
+  }
+}
