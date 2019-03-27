@@ -9,6 +9,10 @@ coverage
 # production
 build
 
+# ide
+.vscode/*
+!.vscode/extensions.json
+
 # misc
 .DS_Store
 .env.local
