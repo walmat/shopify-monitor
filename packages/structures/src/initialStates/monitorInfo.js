@@ -5,7 +5,7 @@ import initialKeywordInfo from './keywordInfo';
 import initialSettings from './settings';
 
 export default {
-  id: null,
+  id: '',
   index: 0,
   site: initialSite,
   keywords: initialKeywordInfo,
