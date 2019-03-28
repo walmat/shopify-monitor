@@ -11,7 +11,7 @@ export default proxy => {
   // ensure parts of the proxy exist
   // NOTE: this regex ensures that all required parts exist, but _doesn't_ validate the parts themselves
   //       are valid. Further validation will be needed once we determine the required parts are present
-  const proxyPartRegex = /(.+):([0-9]+)(?::(.+):(.+))?/;
+  const proxyPartRegex = /^(.+):([0-9]+)(?::([^:]+):([^:]+))?$/;
 
   const match = proxyPartRegex.exec(proxy);
   if (!match) {
@@ -22,17 +22,16 @@ export default proxy => {
 
   // The first index contains the full match, so shift it off before figuring out the number of
   // individual parts that were parsed (will be 2 or 4)
-  // const fullMatch = match.shift();
   match.shift();
-
-  // Determine if proxy requires auth
-  let requiresAuth = false;
-  if (match.length === 4) {
-    requiresAuth = true;
-  }
 
   // Validate parts of the proxy
   const [hostname, port, username, password] = match;
+
+  // Determine if proxy requires auth
+  let requiresAuth = false;
+  if (username && password) {
+    requiresAuth = true;
+  }
 
   // Validate hostname
   const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
@@ -59,10 +58,10 @@ export default proxy => {
 
   // Return built proxy object
   return {
-    id: null,
+    id: '',
     requiresAuth,
-    username,
-    password,
+    username: username || '',
+    password: password || '',
     hostname,
     port,
     value,
