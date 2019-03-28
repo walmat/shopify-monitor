@@ -22,6 +22,26 @@ class SpecTester {
     this._idx = 0;
   }
 
+  // Run a spec test and resolve/throw based on isValid
+  // If keyname is passed, that key will be overwritten from the
+  // base state, otherwise the full value will be used as the state to check
+  checkSpec(value, keyName) {
+    const specWrapper = { test: this._spec };
+    const testState = { test: value };
+    if (keyName) {
+      // If keyname is passed in use the baseState and set only a specific key to the value
+      testState.test = {
+        ...this._baseState,
+        [keyName]: value,
+      };
+    }
+    const errorSpy = jest.spyOn(console, 'error');
+    PropTypes.checkPropTypes(specWrapper, testState, 'test', `test${this._getIdx()}`);
+    const pass = errorSpy.mock.calls.length === 0;
+    errorSpy.mockRestore();
+    return pass;
+  }
+
   // Test a specific key that appears within the spec's properties
   testKey(valid, invalid, keyName) {
     describe(`${keyName} property`, () => {
