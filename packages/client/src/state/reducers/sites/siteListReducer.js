@@ -1,10 +1,10 @@
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable no-case-declarations */
 import shortId from 'shortid';
+import { initialStates } from '@monitor/structures';
 
 import { SITES_ACTIONS } from '../../actions';
 import { siteReducer } from './siteReducer';
-import { initialSitesStates } from '../../../utils/definitions/siteDefinitions';
 
 let _num = 1;
 
@@ -27,7 +27,7 @@ function _getIndex(siteList) {
   return newIndex;
 }
 
-export default function siteListReducer(state = initialSitesStates.list, action) {
+export default function siteListReducer(state = initialStates.siteListState, action) {
   let nextState = JSON.parse(JSON.stringify(state));
 
   switch (action.type) {

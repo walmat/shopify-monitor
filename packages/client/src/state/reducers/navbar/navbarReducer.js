@@ -1,10 +1,7 @@
+import { initialStates } from '@monitor/structures';
 import { mapActionsToRoutes } from '../../actions';
 
-export const initialNavbarState = {
-  location: '/',
-};
-
-export function navbarReducer(state = initialNavbarState, action) {
+export default function navbarReducer(state = initialStates.navbarState, action) {
   const change = {
     location: mapActionsToRoutes[action.type] || state.location,
   };

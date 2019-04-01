@@ -1,5 +1,5 @@
 {
-  "name": "structures",
+  "name": "@monitor/structures",
   "version": "0.1.0",
   "description": "common data structures/definitions used in shopify monitor",
   "main": "dist/index.js",

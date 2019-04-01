@@ -1,7 +1,8 @@
-import { SITES_ACTIONS, SITES_FIELDS, mapSitesFieldsToKey } from '../../actions';
-import { initialSitesStates } from '../../../utils/definitions/siteDefinitions';
+import { initialStates } from '@monitor/structures';
 
-export function siteReducer(state = initialSitesStates.site, action) {
+import { SITES_ACTIONS, SITES_FIELDS, mapSitesFieldsToKey } from '../../actions';
+
+export function siteReducer(state = initialStates.siteState, action) {
   const change = {};
   if (action.type === SITES_ACTIONS.EDIT) {
     switch (action.field) {
@@ -15,7 +16,7 @@ export function siteReducer(state = initialSitesStates.site, action) {
   return Object.assign({}, state, change);
 }
 
-export function newSiteReducer(state = initialSitesStates.site, action) {
+export function newSiteReducer(state = initialStates.siteState, action) {
   switch (action.type) {
     case SITES_ACTIONS.EDIT: {
       // only modify the current site if the action id is null
@@ -35,7 +36,7 @@ export function newSiteReducer(state = initialSitesStates.site, action) {
         return Object.assign({}, state);
       }
       // If adding a valid new site, we should reset the current site to default values
-      return Object.assign({}, state, initialSitesStates.site);
+      return Object.assign({}, state, initialStates.siteState);
     }
     default:
       break;
@@ -44,12 +45,12 @@ export function newSiteReducer(state = initialSitesStates.site, action) {
   return Object.assign({}, state);
 }
 
-export function selectedSiteReducer(state = initialSitesStates.site, action) {
+export function selectedSiteReducer(state = initialStates.siteState, action) {
   switch (action.type) {
     case SITES_ACTIONS.SELECT: {
       // if the user is toggling
       if (!action.site) {
-        return Object.assign({}, initialSitesStates.site);
+        return Object.assign({}, initialStates.siteState);
       }
       // Set the next state to the selected profile
       return Object.assign({}, action.site);

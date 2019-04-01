@@ -1,0 +1,109 @@
+@import "./vars";
+
+.main-wrap{
+  background-image: url('../_assets/stars.svg');
+  background-repeat: no-repeat;
+  background-size: auto;
+  margin: 30px;
+  width: calc(100% - 60px);
+  height: calc(100% - 60px);
+}
+.main-container{
+  width: 80%;
+  height: 70%;
+  padding: 50px;
+  border-radius: 50px;
+  align-self: center;
+  flex-direction: column;
+  justify-content: center;
+  background-color: $background;
+}
+.fourOhFour{
+  position: relative;
+  opacity: 0;
+  &.fourOhFour-enter-done{
+    opacity: 1;
+    transition: all .8s ease-in-out;
+    .astroman{
+      transition: all .8s ease-in-out;
+    }
+  }
+  img{
+    max-width: 100%;
+    &:first-child{
+      z-index: 1;
+    }
+  }
+}
+.astroman{
+  position: absolute;
+  align-self: center;
+  transition: all .8s ease-in-out;
+}
+.error-text{
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  opacity: 0;
+  &.error-text-enter-done{
+    opacity: 1;
+    transition: all .8s ease-in-out;
+    h3{
+      padding-top: 50px;
+      padding-bottom: 30px;
+      transition: all .8s ease-in-out;
+    }
+  }
+  h3{
+    margin: 0px;
+    padding-top: 0px;
+    padding-bottom: 0px;
+    font-size: 22px;
+    font-weight: 300;
+  }
+  a{
+    color: $main-color;
+    font-size: 16px;
+    text-decoration: none;
+    font-weight: 700;
+    padding: 15px 40px;
+    border: 3px solid $text-color;
+    position: relative;
+    z-index: 1;
+    transition: all .4s ease-in-out;
+    &:before{
+      content:'';
+      position: absolute;
+      height: 0%;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: $text-color;
+      z-index: -1;
+      transition: all .4s ease-in-out;
+    }
+    &:hover{
+      color: $background;
+      &:before{
+        height: 100%;
+      }
+    }
+    &:active{
+      transform: scale(.9);
+    }
+  }
+}
+
+@media only screen and (max-width: 920px) {
+  .main-wrap{
+    background-size: unset;
+    .main-container{
+      width: 100%;
+      height: unset;
+      padding: 100px 0px;
+      .astroman{
+        width: 15%;
+      }
+    }
+  }
+}

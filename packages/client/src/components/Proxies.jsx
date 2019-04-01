@@ -1,22 +1,29 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
 
-const MessageBox = styled.div`
-  margin: 0 auto;
-  margin-top: 30px;
-  padding: 40px;
-  text-align: center;
-  background-color: #edbcc6;
-  border-radius: 20px;
-  width: 100%;
-`;
+import '../styles/_proxies.scss';
 
-const Proxies = () => (
-  <div>
-    <div className="container">
-      <MessageBox>This is the proxies page.</MessageBox>
-    </div>
-  </div>
-);
+class Proxies extends Component {
+  componentDidMount() {}
 
-export default Proxies;
+  render() {
+    return <div className="proxies" />;
+  }
+}
+
+Proxies.propTypes = {};
+
+function mapStateToProps(state) {
+  const { sites, settings } = state;
+  return {
+    sites,
+    settings,
+  };
+}
+
+export const mapDispatchToProps = dispatch => ({});
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Proxies);

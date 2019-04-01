@@ -1,0 +1,24 @@
+@import "./vars";
+@import url('https://fonts.googleapis.com/css?family=Open+Sans:300,700');
+
+html,body, #root {
+  width: 100%;
+  height: 100%;
+}
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Open Sans', sans-serif;
+  background-color: $background;
+  color: $text-color;
+  display: flex;
+  margin: 30px;
+  width: calc(100% - 60px);
+  height: calc(100% - 60px);
+}
+.flex {
+  display: flex;
+}
+.justifyCenter {
+  justify-content: center;
+}

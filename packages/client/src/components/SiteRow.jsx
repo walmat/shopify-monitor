@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import { Row, Col } from 'react-grid-system';
 import { connect } from 'react-redux';
-import siteDefns from '../utils/definitions/siteDefinitions';
+import { definitions } from '@monitor/structures';
 
-import '../styles/row.scss';
+import '../styles/_row.scss';
 
 class SiteRow extends Component {
   componentDidMount() {}
@@ -37,7 +37,7 @@ class SiteRow extends Component {
 }
 
 SiteRow.propTypes = {
-  site: siteDefns.site.isRequired,
+  site: definitions.siteDefn.isRequired,
 };
 
 export const mapStateToProps = (state, ownProps) => ({

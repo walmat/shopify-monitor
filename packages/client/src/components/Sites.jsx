@@ -1,8 +1,7 @@
 import React, { Component } from 'react';
-import { Container, Row, Col } from 'react-grid-system';
+import { Container, Row } from 'react-grid-system';
 import { connect } from 'react-redux';
-import siteDefns from '../utils/definitions/siteDefinitions';
-import settingsDefns from '../utils/definitions/settingsDefintions';
+import { definitions } from '@monitor/structures';
 
 class Sites extends Component {
   render() {
@@ -17,9 +16,9 @@ class Sites extends Component {
 }
 
 Sites.propTypes = {
-  site: siteDefns.site.isRequired,
-  sites: siteDefns.siteList.isRequired,
-  settings: settingsDefns.settings.isRequired,
+  site: definitions.siteDefn.isRequired,
+  sites: definitions.siteListDefn.isRequired,
+  settings: definitions.settingsDefn.isRequired,
 };
 
 function mapStateToProps(state) {

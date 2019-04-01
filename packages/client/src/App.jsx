@@ -34,7 +34,7 @@ export class App extends PureComponent {
               <Route path={ROUTES.PROXIES} component={Proxies} />
               <Route path={ROUTES.SETTINGS} component={Settings} />
               <Route component={NotFound} />
-              <Route path="/">
+              <Route path={ROUTES.HOME}>
                 <Redirect to={redirectRoute} />
               </Route>
             </Switch>

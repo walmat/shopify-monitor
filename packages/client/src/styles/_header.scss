@@ -1,0 +1,18 @@
+@import './vars';
+
+.header {
+  background: $background !important;
+  color: $text-color !important;
+
+  &__logo {
+    max-height: 32px;
+  }
+
+  &__nav-item {
+    cursor: pointer;
+    outline: none !important;
+    & > * {
+      outline: none !important;
+    }
+  }
+}

@@ -2,24 +2,22 @@
  * Container for all state reducers. Reducers are available in their specific
  * files, this is just a shared import point.
  */
+import { initialStates } from '@monitor/structures';
 import { newSiteReducer, selectedSiteReducer } from './reducers/sites/siteReducer';
 import siteListReducer from './reducers/sites/siteListReducer';
 import settingsReducer from './reducers/settings/settingsReducer';
-import { navbarReducer, initialNavbarState } from './reducers/navbar/navbarReducer';
+import navbarReducer from './reducers/navbar/navbarReducer';
 import { GLOBAL_ACTIONS } from './actions';
-
-import { initialSitesStates } from '../utils/definitions/siteDefinitions';
-import { initialSettingsStates } from '../utils/definitions/settingsDefintions';
 
 /**
  * Application State
  */
 export const initialState = {
-  navbar: initialNavbarState,
-  sites: initialSitesStates.list,
-  newSite: initialSitesStates.site,
-  selectedSite: initialSitesStates.site,
-  settings: initialSettingsStates.settings,
+  header: initialStates.navbarState,
+  sites: initialStates.siteListState,
+  newSite: initialStates.siteState,
+  selectedSite: initialStates.siteState,
+  settings: initialStates.settingsState,
 };
 
 const topLevelReducer = (state = initialState, action) => {
