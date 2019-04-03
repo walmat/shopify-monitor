@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "@monitor/root",
   "description": "root level for the shopify monitor",
   "version": "0.1.0",
   "private": true,
