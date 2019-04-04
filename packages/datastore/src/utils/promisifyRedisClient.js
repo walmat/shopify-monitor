@@ -17,7 +17,7 @@ export default function promisifyClient(client) {
   methodsToSpecialConvert.forEach(name => {
     switch (name) {
       case 'multi': {
-        updatedClient.multiAsync = args => {
+        updatedClient.multiExecAsync = args => {
           return new Promise((resolve, reject) => {
             client.multi(args).exec((err, res) => {
               if (err) {

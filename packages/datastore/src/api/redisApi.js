@@ -22,7 +22,7 @@ class RedisApi extends Api {
         return [];
       }
       const gets = ids.map(id => ['get', `data:${this._type}:${id}`]);
-      const payloads = await this._client.multiAsync(gets);
+      const payloads = await this._client.multiExecAsync(gets);
       if (payloads.find(p => p === null) === null) {
         throw new Error('could not get all keys');
       }
@@ -81,7 +81,7 @@ class RedisApi extends Api {
       }
       const clone = JSON.parse(JSON.stringify(payload));
       clone.id = newId;
-      await this._client.multiAsync([
+      await this._client.multiExecAsync([
         ['sadd', `ids:${this._type}`, newId],
         ['set', `data:${this._type}:${newId}`, JSON.stringify(clone)],
       ]);
@@ -98,7 +98,7 @@ class RedisApi extends Api {
         // id doesn't exist, return nothing
         return null;
       }
-      await this._client.multiAsync([
+      await this._client.multiExecAsync([
         ['srem', `ids:${this._type}`, id],
         ['del', `data:${this._type}:${id}`],
       ]);
