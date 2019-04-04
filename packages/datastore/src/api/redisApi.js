@@ -7,7 +7,7 @@ class RedisApi extends Api {
   constructor(type, client) {
     super(type);
     // Setup client if it hasn't been setup already
-    if (!client.___promisified) {
+    if (!client.__promisified) {
       this._client = promisifyClient(client);
     } else {
       this._client = client;
