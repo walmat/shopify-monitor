@@ -16,11 +16,11 @@ class MemoryApi extends Api {
     return newId;
   }
 
-  browse() {
+  async browse() {
     return Object.values(this._data);
   }
 
-  read(id) {
+  async read(id) {
     const payload = this._data[id];
     if (!payload) {
       throw new Error('Payload with that id does not exist!');
@@ -28,7 +28,7 @@ class MemoryApi extends Api {
     return payload;
   }
 
-  edit(id, payload) {
+  async edit(id, payload) {
     const old = this._data[id];
     if (!old) {
       // fallback to add if old doesn't exist
@@ -40,7 +40,7 @@ class MemoryApi extends Api {
     return clone;
   }
 
-  add(payload) {
+  async add(payload) {
     const clone = JSON.parse(JSON.stringify(payload));
     const newId = this._genNewId();
     clone.id = newId;
@@ -48,7 +48,7 @@ class MemoryApi extends Api {
     return clone;
   }
 
-  delete(id) {
+  async delete(id) {
     const payload = this._data[id];
     delete this._data[id];
     return payload;

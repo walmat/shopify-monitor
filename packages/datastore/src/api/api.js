@@ -17,7 +17,7 @@ class Api {
    * @returns list of all stored items
    * @throws when operation could not be performed
    */
-  browse() {
+  async browse() {
     throw new Error('This needs to be overwritten in subclass!');
   }
 
@@ -28,7 +28,7 @@ class Api {
    * @returns {Object} payload with the given id
    * @throws when id is invalid or operation could not be performed
    */
-  read(id) {
+  async read(id) {
     throw new Error('This needs to be overwritten in subclass!');
   }
 
@@ -42,7 +42,7 @@ class Api {
    * @returns {Object} updated payload that has been stored
    * @throws when operation could not be performed
    */
-  edit(id, payload) {
+  async edit(id, payload) {
     throw new Error('This needs to be overwritten in subclass!');
   }
 
@@ -53,7 +53,7 @@ class Api {
    * @returns {Object} payload that has been added with a new id
    * @throws when operation could not be performed
    */
-  add(payload) {
+  async add(payload) {
     throw new Error('This needs to be overwritten in subclass!');
   }
 
@@ -66,7 +66,7 @@ class Api {
    * @returns {Object} the object that was deleted
    * @throws when operation could not be performed
    */
-  delete(id) {
+  async delete(id) {
     throw new Error('This needs to be overwritten in subclass!');
   }
 }
