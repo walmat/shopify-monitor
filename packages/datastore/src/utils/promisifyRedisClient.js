@@ -1,39 +1,31 @@
 const { promisify } = require('util');
 
-// These arrays are exported here for testing purposes
-// Arrays are subject to change as we include more redis functionality
+// The array is exported here for testing purposes
+// Array is subject to change as we include more redis functionality
 export const methodsToAutoConvert = ['smembers', 'get', 'set', 'del', 'sadd', 'srem', 'exists'];
-export const methodsToSpecialConvert = ['multi'];
 
 export default function promisifyClient(client) {
   const updatedClient = client;
-  if (!client) {
+  if (!client || client.__promisified) {
     return client;
   }
+
   methodsToAutoConvert.forEach(name => {
-    updatedClient[`${name}Async`] = promisify(client[name]).bind(client);
-  });
-  // Special methods
-  methodsToSpecialConvert.forEach(name => {
-    switch (name) {
-      case 'multi': {
-        updatedClient.multiExecAsync = args => {
-          return new Promise((resolve, reject) => {
-            client.multi(args).exec((err, res) => {
-              if (err) {
-                reject(err);
-              }
-              resolve(res);
-            });
-          });
-        };
-        break;
-      }
-      default: {
-        break;
-      }
+    if (client[name]) {
+      updatedClient[`${name}Async`] = promisify(client[name]).bind(client);
     }
   });
+  // Special methods
+  updatedClient.multiExecAsync = args =>
+    new Promise((resolve, reject) => {
+      client.multi(args).exec((err, res) => {
+        if (err) {
+          reject(err);
+        }
+        resolve(res);
+      });
+    });
+
   updatedClient.__promisified = true;
   return updatedClient;
 }
