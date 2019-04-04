@@ -1,5 +1,5 @@
 {
-  "name": "root",
+  "name": "@monitor/root",
   "description": "root level for the shopify monitor",
   "version": "0.1.0",
   "private": true,
@@ -16,12 +16,17 @@
     "@babel/cli": "^7.2.0",
     "@babel/core": "^7.2.0",
     "@babel/node": "^7.2.0",
+    "@babel/plugin-proposal-class-properties": "^7.2.0",
     "@babel/plugin-proposal-export-default-from": "^7.2.0",
     "@babel/plugin-proposal-export-namespace-from": "^7.2.0",
     "@babel/plugin-proposal-function-bind": "^7.2.0",
+    "@babel/plugin-proposal-json-strings": "^7.2.0",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/plugin-syntax-import-meta": "^7.2.0",
+    "@babel/plugin-transform-runtime": "^7.4.3",
     "@babel/preset-env": "^7.2.0",
     "@babel/preset-react": "^7.0.0",
-    "babel-core": "^7.0.0-0",
+    "babel-core": "^7.0.0-bridge.0",
     "babel-jest": "^23.6.0",
     "eslint": "5.6.0",
     "eslint-config-airbnb": "^17.1.0",
@@ -33,5 +38,8 @@
     "jest": "^23.6.0",
     "prettier": "^1.16.4",
     "yarn": "^1.12.3"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.4.3"
   }
 }

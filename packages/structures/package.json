@@ -1,5 +1,5 @@
 {
-  "name": "structures",
+  "name": "@monitor/structures",
   "version": "0.1.0",
   "description": "common data structures/definitions used in shopify monitor",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "babel src --no-comments -d dist",
+    "build": "babel --root-mode upward --no-comments -d dist src",
     "test": "jest",
     "postinstall": "yarn run build",
     "lint": "eslint --ext js src/",

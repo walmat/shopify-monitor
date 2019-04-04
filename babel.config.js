@@ -1,4 +1,14 @@
 module.exports = {
-  presets: ['@babel/preset-env', '@babel/preset-react'],
-  babelrcRoots: ['./packages/*'],
+  presets: ['@babel/env', '@babel/react'],
+  plugins: [
+    '@babel/transform-runtime',
+    '@babel/proposal-class-properties',
+    '@babel/proposal-export-default-from',
+    '@babel/proposal-export-namespace-from',
+    '@babel/proposal-function-bind',
+    '@babel/proposal-json-strings',
+    '@babel/syntax-dynamic-import',
+    '@babel/syntax-import-meta',
+  ],
+  babelrcRoots: ['packages/*'],
 };
