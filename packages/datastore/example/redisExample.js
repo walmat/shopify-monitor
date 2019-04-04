@@ -1,5 +1,5 @@
 const redis = require('redis');
-const RedisApi = require('../dist/redisApi').default;
+const RedisApi = require('../dist/api/redisApi').default;
 
 const client = redis.createClient();
 const api = new RedisApi('test', client);

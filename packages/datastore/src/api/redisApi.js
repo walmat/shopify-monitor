@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4';
 
 import Api from './api';
-import promisifyClient from './utils/promisifyRedisClient';
+import promisifyClient from '../utils/promisifyRedisClient';
 
 class RedisApi extends Api {
   constructor(type, client) {

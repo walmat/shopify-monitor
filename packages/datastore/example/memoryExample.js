@@ -1,4 +1,4 @@
-const MemoryApi = require('../dist/memoryApi').default;
+const MemoryApi = require('../dist/api/memoryApi').default;
 
 const api = new MemoryApi('test');
 
