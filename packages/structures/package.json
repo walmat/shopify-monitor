@@ -9,7 +9,7 @@
     "dist/*"
   ],
   "scripts": {
-    "build": "babel src --no-comments -d dist",
+    "build": "babel --root-mode upward --no-comments -d dist src",
     "test": "jest",
     "postinstall": "yarn run build",
     "lint": "eslint --ext js src/",
