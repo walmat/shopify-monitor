@@ -1,3 +1,5 @@
+/* eslint class-methods-use-this: ["error", { "exceptMethods": ["browse", "read", "edit", "add", "delete"] }] */
+/* eslint no-unused-vars: "off" */
 // Standard BREAD api
 class Api {
   constructor(type) {

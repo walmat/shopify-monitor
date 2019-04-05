@@ -1,4 +1,4 @@
-/* eslint-disable import/first */
+// Mock uuid and promisify
 jest.mock('uuid/v4', () => jest.fn().mockImplementation(() => jest.requireActual('uuid/v4')()));
 jest.mock('../../utils/promisifyRedisClient.js', () => {
   const { methodsToAutoConvert } = jest.requireActual('../../utils/promisifyRedisClient');

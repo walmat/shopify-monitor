@@ -1,4 +1,4 @@
-/* eslint-disable import/first */
+// Mock uuid
 jest.mock('uuid/v4', () => jest.fn().mockImplementation(() => jest.requireActual('uuid/v4')()));
 
 import uuidv4 from 'uuid/v4';
