@@ -90,6 +90,7 @@ class RedisApi extends Api {
     let newId = uuidv4();
     let verified = false;
     try {
+      RedisApi._validatePayload(payload);
       while (!verified) {
         // eslint-disable-next-line no-await-in-loop
         const reply = await this._client.existsAsync(`data:${this._type}:${newId}`);
@@ -101,10 +102,13 @@ class RedisApi extends Api {
       }
       const clone = JSON.parse(JSON.stringify(payload));
       clone.id = newId;
-      await this._client.multiExecAsync([
+      const replies = await this._client.multiExecAsync([
         ['sadd', `ids:${this._type}`, newId],
         ['set', `data:${this._type}:${newId}`, JSON.stringify(clone)],
       ]);
+      if (replies.find(r => r === null) === null) {
+        throw new Error('could not complete');
+      }
       return clone;
     } catch (err) {
       throw new Error(`Unable to add: ${err.message}`);
@@ -113,15 +117,19 @@ class RedisApi extends Api {
 
   async delete(id) {
     try {
+      RedisApi._validateId(id);
       const reply = await this._client.getAsync(`data:${this._type}:${id}`);
       if (!reply) {
         // id doesn't exist, return nothing
         return null;
       }
-      await this._client.multiExecAsync([
+      const replies = await this._client.multiExecAsync([
         ['srem', `ids:${this._type}`, id],
         ['del', `data:${this._type}:${id}`],
       ]);
+      if (replies[0] === null || replies[1] === null) {
+        throw new Error('could not complete');
+      }
       return JSON.parse(reply);
     } catch (err) {
       throw new Error(`Unable to delete: ${err.message}`);

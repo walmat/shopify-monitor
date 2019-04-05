@@ -1,4 +1,5 @@
 /* eslint-disable import/first */
+jest.mock('uuid/v4', () => jest.fn().mockImplementation(() => jest.requireActual('uuid/v4')()));
 jest.mock('../../utils/promisifyRedisClient.js', () => {
   const { methodsToAutoConvert } = jest.requireActual('../../utils/promisifyRedisClient');
   const mock = jest.fn().mockImplementation(c => {
@@ -10,6 +11,7 @@ jest.mock('../../utils/promisifyRedisClient.js', () => {
   return mock;
 });
 
+import uuidv4 from 'uuid/v4';
 import RedisApi from '../../api/redisApi';
 import promisifyRedisClient, { methodsToAutoConvert } from '../../utils/promisifyRedisClient';
 
@@ -201,8 +203,28 @@ describe('RedisApi', () => {
       );
     });
 
-    it.skip('should add new item if id previously contained no data', async () => {
-      // TODO: implement
+    it('should update id on payload if id property exists', async () => {
+      client.getAsync.mockResolvedValue(JSON.stringify({ old: true }));
+      client.setAsync.mockResolvedValue('OK');
+      const updated = await api.edit('test', { new: true, id: 'test2' });
+      expect(client.getAsync).toHaveBeenCalledWith('data:test:test');
+      expect(client.setAsync).toHaveBeenCalledWith(
+        'data:test:test',
+        expect.stringMatching('"id":"test"'),
+      );
+      expect(updated).toEqual({ new: true, id: 'test' });
+    });
+
+    it('should add new item if id previously contained no data', async () => {
+      api.add = jest.fn().mockImplementation(async p => ({ ...p, id: 'test' }));
+      client.getAsync.mockResolvedValue(null);
+      const updated = await api.edit('test1', { new: true });
+      expect(updated).toEqual({ id: 'test', new: true });
+      expect(api.add).toHaveBeenCalledTimes(1);
+      expect(api.add).toHaveBeenCalledWith({ new: true });
+      expect(client.getAsync).toHaveBeenCalledTimes(1);
+      expect(client.getAsync).toHaveBeenCalledWith('data:test:test1');
+      expect(client.setAsync).not.toHaveBeenCalled();
     });
 
     it('should throw an error if unable to set data', async () => {
@@ -219,22 +241,77 @@ describe('RedisApi', () => {
 
   describe('add', () => {
     beforeEach(() => {
+      uuidv4.mockClear();
       api = new RedisApi('test', client);
     });
 
-    it('should complete if valid object', async () => {});
+    validatePayloadInput('add', true);
 
-    it('should regenerate id if generated one exists already', async () => {});
+    it('should complete if valid object', async () => {
+      uuidv4.mockReturnValue('test');
+      client.existsAsync.mockResolvedValue(null);
+      client.multiExecAsync.mockResolvedValue([1, 'OK']);
+      const first = await api.add({ payload: true });
+      expect(first).toEqual({ id: 'test', payload: true });
+      expect(uuidv4).toHaveBeenCalledTimes(1);
+      expect(client.existsAsync).toHaveBeenCalledTimes(1);
+      expect(client.existsAsync).toHaveBeenCalledWith('data:test:test');
+      expect(client.multiExecAsync).toHaveBeenCalledWith([
+        ['sadd', 'ids:test', 'test'],
+        ['set', 'data:test:test', expect.any(String)],
+      ]);
+    });
 
-    it('should overwrite existing id property with new id', async () => {});
+    it('should regenerate id if generated one exists already', async () => {
+      uuidv4.mockReturnValueOnce('test').mockReturnValueOnce('test1');
+      client.existsAsync.mockResolvedValueOnce('{"test":true}').mockResolvedValueOnce(null);
+      client.multiExecAsync.mockResolvedValue([1, 'OK']);
+      const first = await api.add({ payload: true });
+      expect(first).toEqual({ id: 'test1', payload: true });
+      expect(uuidv4).toHaveBeenCalledTimes(2);
+      expect(client.existsAsync).toHaveBeenCalledTimes(2);
+      expect(client.existsAsync).toHaveBeenNthCalledWith(1, 'data:test:test');
+      expect(client.existsAsync).toHaveBeenNthCalledWith(2, 'data:test:test1');
+      expect(client.multiExecAsync).toHaveBeenCalledWith([
+        ['sadd', 'ids:test', 'test1'],
+        ['set', 'data:test:test1', expect.any(String)],
+      ]);
+    });
 
-    it('should overwrite existing id on payload with new id', async () => {});
+    it('should overwrite existing id property with new id', async () => {
+      uuidv4.mockReturnValue('test');
+      client.existsAsync.mockResolvedValue(null);
+      client.multiExecAsync.mockResolvedValue([1, 'OK']);
+      const first = await api.add({ payload: true, id: 'nottest' });
+      expect(first).toEqual({ id: 'test', payload: true });
+      expect(client.multiExecAsync).toHaveBeenCalledWith([
+        ['sadd', 'ids:test', 'test'],
+        ['set', 'data:test:test', expect.stringMatching('"id":"test"')],
+      ]);
+    });
 
-    it('should throw an error if null/undefined is passed', async () => {});
+    it('should throw an error if unable to verify existing data', async () => {
+      uuidv4.mockReturnValue('test');
+      client.existsAsync.mockRejectedValue(new Error('failed exists'));
+      await expect(api.add({ payload: true })).rejects.toThrow('Unable to add: failed exists');
+      expect(client.multiExecAsync).not.toHaveBeenCalled();
+    });
 
-    it('should throw an error if non-object is passed', async () => {});
+    it('should throw an error if unable to set data due to exception', async () => {
+      uuidv4.mockReturnValue('test');
+      client.existsAsync.mockResolvedValue(null);
+      client.multiExecAsync.mockRejectedValue(new Error('multi exec error'));
+      await expect(api.add({ payload: true })).rejects.toThrow('Unable to add: multi exec error');
+    });
 
-    it('should throw an error if unable to set data', async () => {});
+    it('should throw an error if unable to set data due to failure response', async () => {
+      uuidv4.mockReturnValue('test');
+      client.existsAsync.mockResolvedValue(null);
+      client.multiExecAsync.mockResolvedValue([null, 'OK']);
+      await expect(api.add({ payload: true })).rejects.toThrow('Unable to add: could not complete');
+      client.multiExecAsync.mockResolvedValue([1, null]);
+      await expect(api.add({ payload: true })).rejects.toThrow('Unable to add: could not complete');
+    });
   });
 
   describe('delete', () => {
@@ -242,12 +319,55 @@ describe('RedisApi', () => {
       api = new RedisApi('test', client);
     });
 
-    it('should return null if no data was previously stored at id', async () => {});
+    validateIdInput('delete');
 
-    it('should delete and return data if data was stored at id', async () => {});
+    it('should return null if no data was previously stored at id', async () => {
+      client.getAsync.mockResolvedValue(null);
+      const res = await api.delete('test');
+      expect(res).toBeNull();
+      expect(client.getAsync).toHaveBeenCalledTimes(1);
+      expect(client.getAsync).toHaveBeenCalledWith('data:test:test');
+      expect(client.multiExecAsync).not.toHaveBeenCalled();
+    });
 
-    it('should throw error if unable to check for existing data', async () => {});
+    it('should delete and return data if data was stored at id', async () => {
+      client.getAsync.mockResolvedValue(JSON.stringify({ payload: true }));
+      client.multiExecAsync.mockResolvedValue([1, 1]);
+      const res = await api.delete('test');
+      expect(res).toEqual({ payload: true });
+      expect(client.getAsync).toHaveBeenCalledTimes(1);
+      expect(client.getAsync).toHaveBeenCalledWith('data:test:test');
+      expect(client.multiExecAsync).toHaveBeenCalledTimes(1);
+      expect(client.multiExecAsync).toHaveBeenCalledWith([
+        ['srem', 'ids:test', 'test'],
+        ['del', 'data:test:test'],
+      ]);
+    });
 
-    it('should throw data if unable to delete', async () => {});
+    it('should throw an error if unable to check for existing data', async () => {
+      client.getAsync.mockRejectedValue(new Error('exists failed'));
+      await expect(api.delete('test')).rejects.toThrow('Unable to delete: exists failed');
+      expect(client.multiExecAsync).not.toHaveBeenCalled();
+    });
+
+    it('should throw an error if unable to delete due to exeception', async () => {
+      client.getAsync.mockResolvedValue(JSON.stringify({ payload: true }));
+      client.multiExecAsync.mockRejectedValue(new Error('multi exec failed'));
+      await expect(api.delete('test')).rejects.toThrow('Unable to delete: multi exec failed');
+    });
+
+    it('should throw an error if unable to delete due to failed response', async () => {
+      client.getAsync.mockResolvedValue(JSON.stringify({ payload: true }));
+      client.multiExecAsync.mockResolvedValue([null, 1]);
+      await expect(api.delete('test')).rejects.toThrow('Unable to delete: could not complete');
+      client.multiExecAsync.mockResolvedValue([null, 0]);
+      await expect(api.delete('test')).rejects.toThrow('Unable to delete: could not complete');
+      client.multiExecAsync.mockResolvedValue([null, null]);
+      await expect(api.delete('test')).rejects.toThrow('Unable to delete: could not complete');
+      client.multiExecAsync.mockResolvedValue([0, null]);
+      await expect(api.delete('test')).rejects.toThrow('Unable to delete: could not complete');
+      client.multiExecAsync.mockResolvedValue([1, null]);
+      await expect(api.delete('test')).rejects.toThrow('Unable to delete: could not complete');
+    });
   });
 });
