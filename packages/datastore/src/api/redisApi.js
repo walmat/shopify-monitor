@@ -4,6 +4,24 @@ import Api from './api';
 import promisifyClient from '../utils/promisifyRedisClient';
 
 class RedisApi extends Api {
+  static _validateId(id) {
+    if (!id) {
+      throw new Error('no id given');
+    }
+    if (typeof id !== 'string') {
+      throw new Error('invalid id format');
+    }
+  }
+
+  static _validatePayload(payload) {
+    if (!payload) {
+      throw new Error('no data given');
+    }
+    if (typeof payload !== 'object') {
+      throw new Error('invalid data format');
+    }
+  }
+
   constructor(type, client) {
     super(type);
     // Setup client if it hasn't been setup already
@@ -24,7 +42,7 @@ class RedisApi extends Api {
       const gets = ids.map(id => ['get', `data:${this._type}:${id}`]);
       const payloads = await this._client.multiExecAsync(gets);
       if (payloads.find(p => p === null) === null) {
-        throw new Error('could not get all keys');
+        throw new Error('could not get all ids');
       }
       return payloads.map(JSON.parse);
     } catch (err) {
@@ -34,18 +52,21 @@ class RedisApi extends Api {
 
   async read(id) {
     try {
+      RedisApi._validateId(id);
       const payload = await this._client.getAsync(`data:${this._type}:${id}`);
       if (!payload) {
         throw new Error('no data exists for id');
       }
       return JSON.parse(payload);
     } catch (err) {
-      throw new Error(`Unable to retrieve: ${err.message}`);
+      throw new Error(`Unable to read: ${err.message}`);
     }
   }
 
   async edit(id, payload) {
     try {
+      RedisApi._validateId(id);
+      RedisApi._validatePayload(payload);
       // Check for existing value
       const old = await this._client.getAsync(`data:${this._type}:${id}`);
       if (!old) {
@@ -55,11 +76,10 @@ class RedisApi extends Api {
       const payloadStr = JSON.stringify({ ...payload, id });
       const reply = await this._client.setAsync(`data:${this._type}:${id}`, payloadStr);
       if (!reply) {
-        throw new Error('updating payload failed');
+        throw new Error('updating data failed');
       }
       // Setup cloned payload
       const clone = JSON.parse(payloadStr);
-      clone.id = id;
       return clone;
     } catch (err) {
       throw new Error(`Unable to edit: ${err.message}`);
