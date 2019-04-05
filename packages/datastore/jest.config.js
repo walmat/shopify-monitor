@@ -1,8 +1,9 @@
-const path = require('path');
+const pkg = require('./package');
 
 module.exports = {
+  displayName: pkg.name,
   transform: {
-    '^.+\\.jsx?$': path.resolve(__dirname, '../../config/babelJestTransformer.js'),
+    '^.+\\.jsx?$': '<rootDir>/../../config/babelJestTransformer.js',
   },
   verbose: false,
   collectCoverageFrom: ['src/**/*.js', '!src/index.js', '!src/__tests__/__utils__/'],
