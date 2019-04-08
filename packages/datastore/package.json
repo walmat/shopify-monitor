@@ -1,13 +1,10 @@
 {
-  "name": "@monitor/structures",
+  "name": "@monitor/datastore",
   "version": "0.1.0",
-  "description": "common data structures/definitions used in shopify monitor",
+  "description": "data store layer for shopify monitor",
   "main": "dist/index.js",
   "license": "MIT",
   "private": true,
-  "files": [
-    "dist/*"
-  ],
   "scripts": {
     "build": "babel --root-mode upward --no-comments -d dist src",
     "coverage": "jest --coverage",
@@ -18,7 +15,9 @@
     "lint:fix": "eslint --fix --ext js src/"
   },
   "dependencies": {
+    "@monitor/structures": "^0.1.0",
     "prop-types": "^15.7.2",
-    "whatwg-url": "^7.0.0"
+    "redis": "^2.8.0",
+    "uuid": "^3.3.2"
   }
 }
