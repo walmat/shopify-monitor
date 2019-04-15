@@ -5,17 +5,16 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "node src/server.js",
+    "start": "nodemon src/server.js",
     "build": "babel src -d build",
-    "dev": "concurrently -c blue.bold,magenta --kill-others \"nodemon server.js\" \"cd client && yarn start\"",
     "install-dev": "yarn workspaces install",
     "heroku-postbuild": "yarn --production=false && yarn workspaces run build",
     "lint": "eslint --ext js src/",
     "lint:fix": "eslint --fix --ext js src/"
   },
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.16.4",
-    "morgan": "^1.9.1",
     "react-grid-system": "^4.4.3",
     "shortid": "^2.2.14"
   },

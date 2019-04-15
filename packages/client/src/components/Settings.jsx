@@ -1,23 +1,29 @@
-import React from 'react';
-import styled from 'styled-components';
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
 
-const MessageBox = styled.div`
-  margin: 0 auto;
-  margin-top: 30px;
-  padding: 40px;
-  text-align: center;
-  background-color: #edbcc6;
-  border-radius: 20px;
-  width: 100%;
-  height: 100%;
-`;
+import '../styles/settings.scss';
 
-const Settings = () => (
-  <div>
-    <div className="container">
-      <MessageBox>This is the settings page.</MessageBox>
-    </div>
-  </div>
-);
+class Settings extends Component {
+  componentDidMount() {}
 
-export default Settings;
+  render() {
+    return <div />;
+  }
+}
+
+Settings.propTypes = {};
+
+function mapStateToProps(state) {
+  const { sites, settings } = state;
+  return {
+    sites,
+    settings,
+  };
+}
+
+export const mapDispatchToProps = dispatch => ({});
+
+export default connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(Settings);

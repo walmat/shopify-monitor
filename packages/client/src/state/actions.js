@@ -3,7 +3,7 @@
  */
 import makeActionCreator from './actions/actionCreator';
 
-// import * as home from './actions/profiles/homeActions';
+// import * as home from './actions/home/homeActions';
 import * as sites from './actions/sites/sitesActions';
 // import * as proxies from './actions/server/proxiesActions';
 import * as settings from './actions/settings/settingsActions';
@@ -32,13 +32,7 @@ export const globalActions = {
 
 export const { sitesActions, mapSitesFieldsToKey, SITES_ACTIONS, SITES_FIELDS } = sites;
 
-// export const {
-//   serverActions,
-//   mapServerFieldToKey,
-//   subMapToKey,
-//   SERVER_ACTIONS,
-//   SERVER_FIELDS,
-// } = home;
+// export const { fetchTest } = home;
 
 export const {
   settingsActions,
