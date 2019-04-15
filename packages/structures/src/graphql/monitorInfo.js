@@ -53,11 +53,11 @@ export const monitorInfoInput = new GraphQLInputObjectType({
       description: 'Optional index used when displaying list of MonitorInfo objects',
     },
     site: {
-      type: GraphQLNonNull(SiteInputType),
+      type: SiteInputType,
       description: 'Site to monitor',
     },
     keywords: {
-      type: GraphQLNonNull(KeywordInfoInputType),
+      type: KeywordInfoInputType,
       description: 'KeywordInfo to use as match criteria',
     },
     status: {

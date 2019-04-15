@@ -20,11 +20,11 @@ export const SettingsInputType = new GraphQLInputObjectType({
   description: 'Input data to update Settings',
   fields: () => ({
     defaultErrorDelay: {
-      type: GraphQLNonNull(GraphQLNumber),
+      type: GraphQLNumber,
       description: 'Default error delay when monitoring',
     },
     defaultMonitorDelay: {
-      type: GraphQLNonNull(GraphQLNumber),
+      type: GraphQLNumber,
       description: 'Default monitor delay when monitoring',
     },
   }),

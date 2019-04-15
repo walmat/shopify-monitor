@@ -47,23 +47,23 @@ export const ProxyDataInputType = new GraphQLInputObjectType({
   description: 'Input data to create/edit a Proxy',
   fields: () => ({
     requiresAuth: {
-      type: GraphQLNonNull(GraphQLBoolean),
+      type: GraphQLBoolean,
       description: 'Flag to tell if Proxy requires authentication',
     },
     username: {
-      type: GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
       description: 'Username for Proxy authentication',
     },
     password: {
-      type: GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
       description: 'Password for Proxy authentication',
     },
     hostname: {
-      type: GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
       description: 'Domain or ip part of the Proxy',
     },
     port: {
-      type: GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
       description: 'port part of the Proxy',
     },
   }),

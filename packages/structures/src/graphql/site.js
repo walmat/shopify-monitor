@@ -24,11 +24,11 @@ export const SiteInputType = new GraphQLInputObjectType({
   description: 'Input data to create/edit a Site',
   fields: () => ({
     name: {
-      type: GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
       description: 'The name of the site (for display purposes only)',
     },
     url: {
-      type: GraphQLNonNull(GraphQLString),
+      type: GraphQLString,
       description: 'The url of the site (for monitor purposes)',
     },
   }),

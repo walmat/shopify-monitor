@@ -57,9 +57,9 @@ export const KeywordInfoInputType = new GraphQLUnionType({
   description: 'Union of data/string types for creating/editing a KeywordInfo',
   types: [KeywordInfoDataInputType, KeywordInfoStringInputType],
   resolveType: input => {
-    if (input.positive && input.negative) {
-      return KeywordInfoDataInputType;
+    if (input.value) {
+      return KeywordInfoStringInputType;
     }
-    return KeywordInfoStringInputType;
+    return KeywordInfoDataInputType;
   },
 });
