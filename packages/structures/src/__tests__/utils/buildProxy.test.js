@@ -234,5 +234,5 @@ describe('buildProxy utility function', () => {
       expect(specTester.checkSpec(proxy)).toBeTruthy();
       expect(proxy).toEqual(expected);
     });
-  })
+  });
 });

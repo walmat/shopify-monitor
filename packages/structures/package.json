@@ -18,6 +18,7 @@
     "lint:fix": "eslint --fix --ext js src/"
   },
   "dependencies": {
+    "graphql": "^14.2.1",
     "prop-types": "^15.7.2",
     "whatwg-url": "^7.0.0"
   }
