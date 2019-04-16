@@ -1,7 +1,7 @@
-import proxySpec from '../../definitions/proxy';
+import proxySpec from '../proxy';
 import initialProxy from '../../initialStates/proxy';
 
-import SpecTester from '../__utils__/specTester';
+import SpecTester from './__utils__/specTester';
 
 describe.only('proxy spec', () => {
   const specTester = new SpecTester(proxySpec, initialProxy);

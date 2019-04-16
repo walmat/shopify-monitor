@@ -1,7 +1,7 @@
-import siteSpec from '../../definitions/site';
+import siteSpec from '../site';
 import initialSite from '../../initialStates/site';
 
-import SpecTester from '../__utils__/specTester';
+import SpecTester from './__utils__/specTester';
 
 describe('site spec', () => {
   const specTester = new SpecTester(siteSpec, initialSite);

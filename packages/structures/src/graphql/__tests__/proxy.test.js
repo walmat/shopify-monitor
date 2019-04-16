@@ -1,8 +1,8 @@
-import { ProxyType, ProxyDataInputType, ProxyStringInputType } from '../../graphql/proxy';
+import { ProxyType, ProxyDataInputType, ProxyStringInputType } from '../proxy';
 import initialProxy from '../../initialStates/proxy';
 
-import QuerySchemaTester from '../__utils__/querySchemaTester';
-import MutationSchemaTester from '../__utils__/mutationSchemaTester';
+import QuerySchemaTester from './__utils__/querySchemaTester';
+import MutationSchemaTester from './__utils__/mutationSchemaTester';
 
 describe('Proxy (GraphQL)', () => {
   describe('Queries', () => {

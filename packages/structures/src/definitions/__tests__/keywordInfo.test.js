@@ -1,7 +1,7 @@
-import keywordInfoSpec from '../../definitions/keywordInfo';
+import keywordInfoSpec from '../keywordInfo';
 import initialKeywordInfo from '../../initialStates/keywordInfo';
 
-import SpecTester from '../__utils__/specTester';
+import SpecTester from './__utils__/specTester';
 
 describe('keyword info spec', () => {
   const specTester = new SpecTester(keywordInfoSpec, initialKeywordInfo);

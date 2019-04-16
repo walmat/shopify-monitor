@@ -2,11 +2,11 @@ import {
   KeywordInfoType,
   KeywordInfoDataInputType,
   KeywordInfoStringInputType,
-} from '../../graphql/keywordInfo';
+} from '../keywordInfo';
 import initialKeyword from '../../initialStates/keywordInfo';
 
-import QuerySchemaTester from '../__utils__/querySchemaTester';
-import MutationSchemaTester from '../__utils__/mutationSchemaTester';
+import QuerySchemaTester from './__utils__/querySchemaTester';
+import MutationSchemaTester from './__utils__/mutationSchemaTester';
 
 describe('KeywordInfo (GraphQL)', () => {
   describe('Queries', () => {

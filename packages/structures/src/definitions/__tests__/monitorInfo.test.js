@@ -1,9 +1,9 @@
-import monitorInfoSpec from '../../definitions/monitorInfo';
+import monitorInfoSpec from '../monitorInfo';
 import initialmonitorInfo from '../../initialStates/monitorInfo';
 import initialSite from '../../initialStates/site';
 import initialKeywordInfo from '../../initialStates/keywordInfo';
 
-import SpecTester from '../__utils__/specTester';
+import SpecTester from './__utils__/specTester';
 
 describe('monitor info spec', () => {
   const specTester = new SpecTester(monitorInfoSpec, initialmonitorInfo);

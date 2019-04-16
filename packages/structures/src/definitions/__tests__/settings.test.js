@@ -1,7 +1,7 @@
-import settingsSpec from '../../definitions/settings';
+import settingsSpec from '../settings';
 import initialSettings from '../../initialStates/settings';
 
-import SpecTester from '../__utils__/specTester';
+import SpecTester from './__utils__/specTester';
 
 describe('settings spec', () => {
   const specTester = new SpecTester(settingsSpec, initialSettings);

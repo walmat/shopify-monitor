@@ -1,8 +1,8 @@
-import { SiteType, SiteInputType } from '../../graphql/site';
+import { SiteType, SiteInputType } from '../site';
 import initialSite from '../../initialStates/site';
 
-import QuerySchemaTester from '../__utils__/querySchemaTester';
-import MutationSchemaTester from '../__utils__/mutationSchemaTester';
+import QuerySchemaTester from './__utils__/querySchemaTester';
+import MutationSchemaTester from './__utils__/mutationSchemaTester';
 
 describe('Site (GraphQL)', () => {
   describe('Queries', () => {

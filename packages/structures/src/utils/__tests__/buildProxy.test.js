@@ -1,8 +1,8 @@
-import buildProxy from '../../utils/buildProxy';
+import buildProxy from '../buildProxy';
 import initialProxy from '../../initialStates/proxy';
 import proxySpec from '../../definitions/proxy';
 
-import SpecTester from '../__utils__/specTester';
+import SpecTester from '../../definitions/__tests__/__utils__/specTester';
 
 describe('buildProxy utility function', () => {
   describe('should return the initial proxy state', () => {

@@ -1,8 +1,8 @@
-import buildKeywordInfo from '../../utils/buildKeywordInfo';
+import buildKeywordInfo from '../buildKeywordInfo';
 import initialKeywordInfo from '../../initialStates/keywordInfo';
 import keywordInfoSpec from '../../definitions/keywordInfo';
 
-import SpecTester from '../__utils__/specTester';
+import SpecTester from '../../definitions/__tests__/__utils__/specTester';
 
 describe('buildKeywordInfo utility function', () => {
   describe('should return initial state', () => {

@@ -1,8 +1,8 @@
-import { SettingsType, SettingsInputType } from '../../graphql/settings';
+import { SettingsType, SettingsInputType } from '../settings';
 import initialSettings from '../../initialStates/settings';
 
-import QuerySchemaTester from '../__utils__/querySchemaTester';
-import MutationSchemaTester from '../__utils__/mutationSchemaTester';
+import QuerySchemaTester from './__utils__/querySchemaTester';
+import MutationSchemaTester from './__utils__/mutationSchemaTester';
 
 describe('Settings (GraphQL)', () => {
   describe('Queries', () => {
