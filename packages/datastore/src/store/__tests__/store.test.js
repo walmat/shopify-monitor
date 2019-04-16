@@ -1,5 +1,5 @@
 /* eslint-disable no-unused-expressions */
-import Store from '../../store/store';
+import Store from '../store';
 
 describe('Abstract Store', () => {
   it('should throw an error when attempting to construct it', () => {

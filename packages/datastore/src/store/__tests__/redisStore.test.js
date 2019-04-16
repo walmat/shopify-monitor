@@ -7,8 +7,9 @@ jest.mock('../../api/redisApi');
 import { createClient } from 'redis';
 
 import RedisApi from '../../api/redisApi';
-import RedisStore from '../../store/redisStore';
 import Datasources from '../../utils/datasources';
+
+import RedisStore from '../redisStore';
 
 const RealRedisApi = jest.requireActual('../../api/redisApi').default;
 

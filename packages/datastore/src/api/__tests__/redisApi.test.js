@@ -12,7 +12,7 @@ jest.mock('../../utils/promisifyRedisClient.js', () => {
 });
 
 import uuidv4 from 'uuid/v4';
-import RedisApi from '../../api/redisApi';
+import RedisApi from '../redisApi';
 import promisifyRedisClient, { methodsToAutoConvert } from '../../utils/promisifyRedisClient';
 
 describe('RedisApi', () => {

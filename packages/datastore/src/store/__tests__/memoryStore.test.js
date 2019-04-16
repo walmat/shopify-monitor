@@ -1,7 +1,7 @@
 /* eslint-disable no-new */
 jest.mock('../../api/memoryApi');
 
-import MemoryStore from '../../store/memoryStore';
+import MemoryStore from '../memoryStore';
 import Datasources from '../../utils/datasources';
 import MemoryApi from '../../api/memoryApi';
 

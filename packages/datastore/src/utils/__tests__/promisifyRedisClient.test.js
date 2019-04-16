@@ -1,4 +1,4 @@
-import promisifyRedisClient, { methodsToAutoConvert } from '../../utils/promisifyRedisClient';
+import promisifyRedisClient, { methodsToAutoConvert } from '../promisifyRedisClient';
 
 describe('promisify redis client utility method', () => {
   it('should skip all promisify if client is undefined or null', () => {

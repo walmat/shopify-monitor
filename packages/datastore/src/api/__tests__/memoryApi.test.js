@@ -2,7 +2,7 @@
 jest.mock('uuid/v4', () => jest.fn().mockImplementation(() => jest.requireActual('uuid/v4')()));
 
 import uuidv4 from 'uuid/v4';
-import MemoryApi from '../../api/memoryApi';
+import MemoryApi from '../memoryApi';
 
 describe('MemoryApi', () => {
   let api;

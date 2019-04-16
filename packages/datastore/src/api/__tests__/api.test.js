@@ -1,4 +1,4 @@
-import Api from '../../api/api';
+import Api from '../api';
 
 describe('Abstract Api', () => {
   it('should throw an error then attempting to contruct it', () => {
