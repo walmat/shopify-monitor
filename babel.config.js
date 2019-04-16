@@ -11,4 +11,12 @@ module.exports = {
     '@babel/syntax-import-meta',
   ],
   babelrcRoots: ['packages/*'],
+  env: {
+    production: {
+      ignore: ['**/__tests__', '**/*.test.js'],
+    },
+    development: {
+      ignore: ['**/__tests__', '**/*.test.js'],
+    },
+  },
 };
