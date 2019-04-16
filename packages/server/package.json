@@ -5,10 +5,13 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "nodemon src/server.js",
-    "build": "babel src -d build",
-    "install-dev": "yarn workspaces install",
+    "start": "yarn run dev",
+    "dev": "yarn run dev:nodemon",
+    "dev:nodemon": "nodemon --config nodemon.json",
+    "dev:node": "node dist/server.js",
+    "build": "babel --root-mode upward --no-comments -d dist src/",
     "heroku-postbuild": "yarn --production=false && yarn workspaces run build",
+    "postinstall": "yarn run build",
     "lint": "eslint --ext js src/",
     "lint:fix": "eslint --fix --ext js src/"
   },
