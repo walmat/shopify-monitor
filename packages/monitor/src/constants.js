@@ -64,7 +64,7 @@ const MonitorStates = {
 
 const MonitorEvents = {
   All: 'ALL',
-  Status: 'MONITOR_STATUS',
+  Status: 'STATUS',
   SwapProxy: 'SWAP_PROXY',
   ReceiveProxy: 'RECEIVE_PROXY',
 };
