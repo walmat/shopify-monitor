@@ -4,7 +4,6 @@ import {
   GraphQLNonNull,
   GraphQLString,
   GraphQLBoolean,
-  GraphQLUnionType,
 } from 'graphql';
 
 export const ProxyType = new GraphQLObjectType({
@@ -78,16 +77,4 @@ export const ProxyStringInputType = new GraphQLInputObjectType({
       description: 'Formatted string representation of Proxy',
     },
   }),
-});
-
-export const ProxyInputType = new GraphQLUnionType({
-  name: 'ProxyInput',
-  description: 'Union of data/string types for creating/editing a Proxy',
-  types: [ProxyDataInputType, ProxyStringInputType],
-  resolveType: input => {
-    if (input.value) {
-      return ProxyStringInputType;
-    }
-    return ProxyDataInputType;
-  },
 });

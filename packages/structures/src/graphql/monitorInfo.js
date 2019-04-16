@@ -7,7 +7,11 @@ import {
 } from 'graphql';
 
 import { SiteType, SiteInputType } from './site';
-import { KeywordInfoType, KeywordInfoInputType } from './keywordInfo';
+import {
+  KeywordInfoType,
+  KeywordInfoDataInputType,
+  KeywordInfoStringInputType,
+} from './keywordInfo';
 
 export const monitorInfo = new GraphQLObjectType({
   name: 'MonitorInfo',
@@ -57,8 +61,12 @@ export const monitorInfoInput = new GraphQLInputObjectType({
       description: 'Site to monitor',
     },
     keywords: {
-      type: KeywordInfoInputType,
+      type: KeywordInfoDataInputType,
       description: 'KeywordInfo to use as match criteria',
+    },
+    keywordsRaw: {
+      type: KeywordInfoStringInputType,
+      description: 'KeywordInfo to use as match criteria (raw string)',
     },
     status: {
       type: GraphQLString,

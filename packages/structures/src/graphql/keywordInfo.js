@@ -4,7 +4,6 @@ import {
   GraphQLNonNull,
   GraphQLString,
   GraphQLInputObjectType,
-  GraphQLUnionType,
 } from 'graphql';
 
 export const KeywordInfoType = new GraphQLObjectType({
@@ -50,16 +49,4 @@ export const KeywordInfoStringInputType = new GraphQLInputObjectType({
       description: 'Formatted string representation for keywords',
     },
   }),
-});
-
-export const KeywordInfoInputType = new GraphQLUnionType({
-  name: 'KeywordInfoInput',
-  description: 'Union of data/string types for creating/editing a KeywordInfo',
-  types: [KeywordInfoDataInputType, KeywordInfoStringInputType],
-  resolveType: input => {
-    if (input.value) {
-      return KeywordInfoStringInputType;
-    }
-    return KeywordInfoDataInputType;
-  },
 });
