@@ -11,11 +11,11 @@ export const KeywordInfoType = new GraphQLObjectType({
   description: 'Keyword info to use as matching criteria for monitor',
   fields: () => ({
     positive: {
-      type: GraphQLList(GraphQLNonNull(GraphQLString)),
+      type: GraphQLNonNull(GraphQLList(GraphQLNonNull(GraphQLString))),
       description: 'Keywords that must be included in product for a successful match',
     },
     negative: {
-      type: GraphQLList(GraphQLNonNull(GraphQLString)),
+      type: GraphQLNonNull(GraphQLList(GraphQLNonNull(GraphQLString))),
       description: 'Keywords that must not be included in product for a successful match',
     },
     value: {

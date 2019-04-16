@@ -1,15 +1,15 @@
-import { GraphQLNumber, GraphQLNonNull, GraphQLObjectType, GraphQLInputObjectType } from 'graphql';
+import { GraphQLNonNull, GraphQLObjectType, GraphQLInputObjectType, GraphQLInt } from 'graphql';
 
 export const SettingsType = new GraphQLObjectType({
   name: 'Settings',
   description: 'Settings for the monitor',
   fields: () => ({
     defaultErrorDelay: {
-      type: GraphQLNonNull(GraphQLNumber),
+      type: GraphQLNonNull(GraphQLInt),
       description: 'Default error delay when monitoring',
     },
     defaultMonitorDelay: {
-      type: GraphQLNonNull(GraphQLNumber),
+      type: GraphQLNonNull(GraphQLInt),
       description: 'Default monitor delay when monitoring',
     },
   }),
@@ -20,11 +20,11 @@ export const SettingsInputType = new GraphQLInputObjectType({
   description: 'Input data to update Settings',
   fields: () => ({
     defaultErrorDelay: {
-      type: GraphQLNumber,
+      type: GraphQLInt,
       description: 'Default error delay when monitoring',
     },
     defaultMonitorDelay: {
-      type: GraphQLNumber,
+      type: GraphQLInt,
       description: 'Default monitor delay when monitoring',
     },
   }),

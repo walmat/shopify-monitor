@@ -3,7 +3,7 @@ import {
   GraphQLInputObjectType,
   GraphQLNonNull,
   GraphQLString,
-  GraphQLNumber,
+  GraphQLInt,
 } from 'graphql';
 
 import { SiteType, SiteInputType } from './site';
@@ -13,7 +13,7 @@ import {
   KeywordInfoStringInputType,
 } from './keywordInfo';
 
-export const monitorInfo = new GraphQLObjectType({
+export const MonitorInfoType = new GraphQLObjectType({
   name: 'MonitorInfo',
   description: 'Info required to monitor',
   fields: () => ({
@@ -22,7 +22,7 @@ export const monitorInfo = new GraphQLObjectType({
       description: 'Id of MonitorInfo object',
     },
     index: {
-      type: GraphQLNumber,
+      type: GraphQLInt,
       description: 'Optional index used when displaying list of MonitorInfo objects',
     },
     site: {
@@ -38,22 +38,22 @@ export const monitorInfo = new GraphQLObjectType({
       description: 'Last monitor status message associated for this MonitorInfo',
     },
     monitorDelay: {
-      type: GraphQLNonNull(GraphQLNumber),
+      type: GraphQLNonNull(GraphQLInt),
       description: 'delay (in ms) to wait between monitor cycles',
     },
     errorDelay: {
-      type: GraphQLNonNull(GraphQLNumber),
+      type: GraphQLNonNull(GraphQLInt),
       description: 'delay (in ms) to wait when error occurs in monitor cycles',
     },
   }),
 });
 
-export const monitorInfoInput = new GraphQLInputObjectType({
+export const MonitorInfoInputType = new GraphQLInputObjectType({
   name: 'MonitorInfoInput',
   description: 'Input data to create/edit a MonitorInfo object',
   fields: () => ({
     index: {
-      type: GraphQLNumber,
+      type: GraphQLInt,
       description: 'Optional index used when displaying list of MonitorInfo objects',
     },
     site: {
@@ -73,11 +73,11 @@ export const monitorInfoInput = new GraphQLInputObjectType({
       description: 'Last monitor status message associated for this MonitorInfo',
     },
     monitorDelay: {
-      type: GraphQLNumber,
+      type: GraphQLInt,
       description: 'delay (in ms) to wait between monitor cycles',
     },
     errorDelay: {
-      type: GraphQLNumber,
+      type: GraphQLInt,
       description: 'delay (in ms) to wait when error occurs in monitor cycles',
     },
   }),
