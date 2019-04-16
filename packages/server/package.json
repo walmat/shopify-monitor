@@ -16,8 +16,11 @@
     "lint:fix": "eslint --fix --ext js src/"
   },
   "dependencies": {
+    "@monitor/structures": "0.1.0",
     "cors": "^2.8.5",
     "express": "^4.16.4",
+    "express-graphql": "^0.8.0",
+    "graphql": "^14.2.1",
     "react-grid-system": "^4.4.3",
     "shortid": "^2.2.14"
   },
