@@ -9,7 +9,17 @@ import {
 import * as structures from '@monitor/structures';
 
 const {
-  graphql: { MonitorInfoType, ProxyType, SettingsType, SiteType },
+  graphql: {
+    MonitorInfoType,
+    MonitorInfoInputType,
+    ProxyType,
+    ProxyStringInputType,
+    ProxyDataInputType,
+    SettingsType,
+    SettingsInputType,
+    SiteType,
+    SiteInputType,
+  },
 } = structures;
 
 const {
@@ -76,8 +86,131 @@ const query = new GraphQLObjectType({
   }),
 });
 
+const mutation = new GraphQLObjectType({
+  name: 'MutationAPI',
+  description: 'Mutation API for Shopify Monitor',
+  fields: () => ({
+    addProxyFromString: {
+      type: ProxyType,
+      description: 'Add a new proxy from a raw string input',
+      args: {
+        data: {
+          type: GraphQLNonNull(ProxyStringInputType),
+          description: 'String to parse for proxy data',
+        },
+      },
+      resolve: () => ({ ...proxyState }), // TODO: Implement
+    },
+    addProxyFromData: {
+      type: ProxyType,
+      description: 'Add a new proxy from structured data',
+      args: {
+        data: {
+          type: GraphQLNonNull(ProxyDataInputType),
+          description: 'Structured data for proxy',
+        },
+      },
+      resolve: () => ({ ...proxyState }), // TODO: Implement
+    },
+    editProxyFromString: {
+      type: ProxyType,
+      description: 'Edit an existing proxy using a raw string input',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of proxy to edit',
+        },
+        data: {
+          type: GraphQLNonNull(ProxyStringInputType),
+          description: 'String to parse for proxy data',
+        },
+      },
+      resolve: () => ({ ...proxyState }), // TODO: Implement
+    },
+    editProxyFromData: {
+      type: ProxyType,
+      description: 'Edit an existing proxy using structured data',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of proxy to edit',
+        },
+        data: {
+          type: GraphQLNonNull(ProxyDataInputType),
+          description: 'Structured data for proxy',
+        },
+      },
+      resolve: () => ({ ...proxyState }), // TODO: Implement
+    },
+    updateSettings: {
+      type: SettingsType,
+      description: 'Update the saved settings',
+      args: {
+        data: {
+          type: GraphQLNonNull(SettingsInputType),
+          description: 'Updated settings to save',
+        },
+      },
+      resolve: () => ({ ...settingsState }), // TODO: Implement
+    },
+    addWebhook: {
+      type: SiteType,
+      description: 'Add a new webhook',
+      args: {
+        data: {
+          type: GraphQLNonNull(SiteInputType),
+          description: 'webhook info to add',
+        },
+      },
+      resolve: () => ({ ...siteState }), // TODO: Implement
+    },
+    editWebhook: {
+      type: SiteType,
+      description: 'edit an existing webhook',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of webhook to update',
+        },
+        data: {
+          type: GraphQLNonNull(SiteInputType),
+          description: 'updated webhook info',
+        },
+      },
+      resolve: () => ({ ...siteState }), // TODO: Implement
+    },
+    addMonitor: {
+      type: MonitorInfoType,
+      description: 'Add a new Monitor',
+      args: {
+        data: {
+          type: GraphQLNonNull(MonitorInfoInputType),
+          description: 'Monitor Info to add',
+        },
+      },
+      resolve: () => ({ ...monitorInfoState }), // TODO: Implement
+    },
+    editMonitor: {
+      type: MonitorInfoType,
+      description: 'Edit an existing Monitor',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of monitor to edit',
+        },
+        data: {
+          type: GraphQLNonNull(MonitorInfoInputType),
+          description: 'Updated monitor info',
+        },
+      },
+      resolve: () => ({ ...monitorInfoState }), // TODO: Implement
+    },
+  }),
+});
+
 const schema = new GraphQLSchema({
   query,
+  mutation,
   types: [MonitorInfoType, SiteType, SettingsType, ProxyType],
 });
 
