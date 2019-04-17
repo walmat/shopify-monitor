@@ -413,7 +413,7 @@ class Manager {
     this._handlers[monitor.id] = handlers;
 
     monitor.registerForEvent(Monitor.Events.Status, this.mergeStatusUpdates);
-    monitor._events.on(Monitor.Events.SwapProxy, this.handleSwapProxy, this);
+    monitor._events.on(Monitor.Events.SwapProxy, this.handleProxySwap, this);
   }
 
   /**
@@ -442,7 +442,7 @@ class Manager {
     if (!monitor) {
       return;
     }
-    monitor.site = monitor.site.url;
+    // monitor.site = monitor.site.url;
     this._monitors[id] = monitor;
 
     this._setup(monitor);

@@ -1,3 +1,5 @@
+const { rfrl } = require('./monitor/rfrl');
+
 const userAgent =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36';
 
@@ -79,6 +81,10 @@ const Hooks = {
   Slack: 'SLACK',
 };
 
+const ErrorCodes = {
+  VariantsNotAvailable: 'VARIANTS_NOT_AVAILABLE',
+};
+
 module.exports = {
   Manager: {
     Events: ManagerEvents,
@@ -90,9 +96,11 @@ module.exports = {
     Hooks,
   },
   Utils: {
+    ErrorCodes,
     userAgent,
     headers,
     delay,
     format,
+    rfrl,
   },
 };

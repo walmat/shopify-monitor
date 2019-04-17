@@ -1,7 +1,11 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
+const { delay, rfrl, ErrorCodes, format, userAgent } = require('./constants').Utils;
 const { States, Events, Delays, Hooks } = require('./constants').Monitor;
 const ManagerEvents = require('./constants').Manager.Events;
+const { ParseType, getParseType } = require('./monitor/parse');
+const { generateAvailableVariants } = require('./monitor/generateVariants');
+const { Parser, AtomParser, JsonParser, XmlParser, getSpecialParser } = require('./parsers');
 
 const { Discord, Slack } = require('./hooks');
 
@@ -15,9 +19,6 @@ class Monitor {
     this._data = data;
     this._proxy = proxy;
 
-    // TEMPORARY: remove when all functions are implemented!
-    this.TODO = true;
-
     this._request = request.defaults({
       timeout: 10000,
       jar: request.jar(),
@@ -30,17 +31,61 @@ class Monitor {
       id,
       data,
       proxy: proxy ? proxy.proxy : null,
+      status: null,
       request: this._request,
       discord: data.discord ? new Discord(data.discord) : null,
       slack: data.slack ? new Slack(data.slack) : null,
       abort: false,
     };
 
+    this._parseType = getParseType(this._context.data.product, this._context.data.site);
+
     this._events = new EventEmitter();
 
     this._handleAbort = this._handleAbort.bind(this);
     this._events.on(ManagerEvents.ChangeDelay, this._changeDelay, this);
     this._events.on(ManagerEvents.ChangeWebhook, this._changeWebhook, this);
+  }
+
+  // MARK: Event Registration
+  registerForEvent(event, callback) {
+    switch (event) {
+      case Events.Status: {
+        this._events.on(Events.Status, callback);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  deregisterForEvent(event, callback) {
+    switch (event) {
+      case Events.Status: {
+        this._events.removeListener(Events.Status, callback);
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
+
+  _emitEvent(event, payload = {}) {
+    switch (event) {
+      // Emit supported events on their specific channel
+      case Events.Status: {
+        if (payload.status && payload.status !== this._context.status) {
+          this._context.status = payload.status;
+          this._events.emit(event, this._context.id, payload, event);
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+    this._logger.silly('Event %s emitted: %j', event, payload);
   }
 
   _handleAbort(id) {
@@ -50,15 +95,15 @@ class Monitor {
     this._context.abort = true;
   }
 
-  _changeDelay(id, delay, type) {
+  _changeDelay(id, newDelay, type) {
     if (id !== this._context.id) {
       return;
     }
 
     if (type === Delays.Error) {
-      this._context.data.errorDelay = delay;
+      this._context.data.errorDelay = newDelay;
     } else if (type === Delays.Monitor) {
-      this._context.data.monitorDelay = delay;
+      this._context.data.monitorDelay = newDelay;
     }
   }
 
@@ -68,9 +113,9 @@ class Monitor {
     }
 
     if (type === Hooks.Discord) {
-      this._context.task.discord = hook;
+      this._context.data.discord = hook;
     } else if (type === Hooks.Slack) {
-      this._context.task.slack = hook;
+      this._context.data.slack = hook;
     }
   }
 
@@ -80,43 +125,287 @@ class Monitor {
     }
   }
 
-  /**
-   * Starts the monitor process
-   */
-  async start() {
-    this._prevState = States.Start;
-    this._state = States.Start;
+  async _delay(status) {
+    let timeout = this._context.data.monitorDelay;
+    switch (status || 404) {
+      case 401: {
+        timeout = this._context.data.errorDelay;
+        break;
+      }
+      default:
+        break;
+    }
+    await delay(timeout);
+    return { status: `Monitoring...`, nextState: States.Parse };
+  }
 
-    while (this._state !== States.Stop && !this.stop) {
-      // eslint-disable-next-line no-await-in-loop
-      this.stop = await this.run();
+  async _handleParsingErrors(errors) {
+    // consolidate statuses
+    const statuses = errors.map(error => error.status);
+    // Check for bans
+    let checkStatus = statuses.every(s => s === 403 || s === 429 || s === 430);
+    if (checkStatus) {
+      return {
+        status: 'Swapping proxy',
+        shouldBan: true,
+        nextState: States.SwapProxies,
+      };
+    }
+    checkStatus = statuses.find(s => s === ErrorCodes.ProductNotFound || s >= 400);
+    return this._delay(checkStatus || 404);
+  }
+
+  static _generateVariants(product) {
+    let variants;
+    try {
+      ({ variants } = generateAvailableVariants(product));
+    } catch (err) {
+      if (err.code === ErrorCodes.VariantsNotMatched) {
+        return {
+          status: 'Unable to match',
+          nextState: States.Stop,
+        };
+      }
+      if (err.code === ErrorCodes.VariantsNotAvailable) {
+        return {
+          status: 'Restock Mode',
+          nextState: States.Restock,
+        };
+      }
+      return {
+        status: 'Monitor has errored out!',
+        nextState: States.Error,
+      };
+    }
+    return variants;
+  }
+
+  _parseAll() {
+    // Create the parsers and start the async run methods
+    const parsers = [
+      new AtomParser(
+        this._context.request,
+        this._context.task,
+        this._context.proxy,
+        this._context.logger,
+      ),
+      new JsonParser(
+        this._context.request,
+        this._context.task,
+        this._context.proxy,
+        this._context.logger,
+      ),
+      new XmlParser(
+        this._context.request,
+        this._context.task,
+        this._context.proxy,
+        this._context.logger,
+      ),
+    ].map(p => p.run());
+    // Return the winner of the race
+    return rfrl(parsers, 'parseAll');
+  }
+
+  async _monitorKeywords() {
+    let parsed;
+    try {
+      // Try parsing all files and wait for the first response
+      parsed = await this._parseAll();
+    } catch (errors) {
+      return this._handleParsingErrors(errors);
+    }
+    this._context.data.product.restockUrl = parsed.url; // Store restock url in case all variants are out of stock
+    const { site } = this._context.data;
+    const { variants, nextState, status } = Monitor._generateVariants(parsed);
+    // check for next state (means we hit an error when generating variants)
+    if (nextState) {
+      return { nextState, status };
+    }
+    this._context.task.product.variants = variants;
+    this._context.task.product.url = `${site.url}/products/${parsed.handle}`;
+    this._context.task.product.name = parsed.title;
+    return {
+      status: `Found product: ${this._context.task.product.name}`,
+      nextState: States.CheckStock,
+    };
+  }
+
+  async _monitorUrl() {
+    const [url] = this._context.data.product.url.split('?');
+    try {
+      await this._request({
+        method: 'GET',
+        uri: url,
+        proxy: format(this._context.proxy),
+        rejectUnauthorized: false,
+        followAllRedirects: true,
+        resolveWithFullResponse: true,
+        simple: true,
+        gzip: true,
+        headers: {
+          'User-Agent': userAgent,
+        },
+      });
+
+      let fullProductInfo;
+      try {
+        // Try getting full product info
+        fullProductInfo = await Parser.getFullProductInfo(url, this._request);
+      } catch (errors) {
+        return this._handleParsingErrors(errors);
+      }
+
+      this._context.data.product.restockUrl = url; // Store restock url in case all variants are out of stock
+      const { variants, nextState, status } = this._generateVariants(fullProductInfo);
+      // check for next state (means we hit an error when generating variants)
+      if (nextState) {
+        return { nextState, status };
+      }
+      this._context.data.product.variants = variants;
+
+      this._context.data.product.name = fullProductInfo.title;
+      return {
+        status: `Found product: ${this._context.task.product.name}`,
+        nextState: States.CheckStock,
+      };
+    } catch (error) {
+      return this._delay(error.statusCode);
+    }
+  }
+
+  async _monitorSpecial() {
+    const { task, proxy } = this._context;
+    const { product, site } = task;
+    // Get the correct special parser
+    const ParserCreator = getSpecialParser(site);
+    const parser = ParserCreator(this._request, task, proxy);
+
+    let parsed;
+    try {
+      parsed = await parser.run();
+    } catch (error) {
+      // Check for a product not found error
+      if (error.status === ErrorCodes.ProductNotFound) {
+        return { status: 'Product Not Found!', nextState: States.Error };
+      }
+      return this._delay(error.status);
+    }
+    this._context.task.product.restockUrl = parsed.url; // Store restock url in case all variants are out of stock
+    let variants;
+    let sizes;
+    let nextState;
+    let status;
+    if (product.variant) {
+      variants = [product.variant];
+    } else {
+      ({ variants, nextState, status } = this._generateVariants(parsed));
+      // check for next state (means we hit an error when generating variants)
+      if (nextState) {
+        return { nextState, status };
+      }
     }
 
-    this._cleanup();
+    this._context.data.product.variants = variants;
+    this._context.data.product.chosenSizes = sizes;
+    this._context.data.product.name = parsed.title;
+    return {
+      status: `Found product: ${this._context.data.product.name}`,
+      nextState: States.CheckStock,
+    };
   }
 
   async _handleStart() {
-    if (this.TODO) {
-      console.log(new Error('IMPLEMENT _handleStart'));
+    if (this._context.abort) {
+      return States.Abort;
     }
+    this._emitEvent(Events.Status, {
+      status: 'Starting...',
+      proxy: this._context.proxy,
+    });
+    return States.Parse;
   }
 
   async _handleParse() {
-    if (this.TODO) {
-      console.log(new Error('IMPLEMENT _handleParse'));
+    const {
+      abort,
+      data: {
+        product: { variant },
+      },
+    } = this._context;
+
+    if (abort) {
+      return States.Abort;
     }
+
+    let result;
+    switch (this._parseType) {
+      case ParseType.Variant: {
+        this._context.data.product.variants = [variant];
+        result = { nextState: States.Restock };
+        break;
+      }
+      case ParseType.Url: {
+        result = await this._monitorUrl();
+        break;
+      }
+      case ParseType.Keywords: {
+        result = await this._monitorKeywords();
+        break;
+      }
+      case ParseType.Special: {
+        result = await this._monitorSpecial();
+        break;
+      }
+      default: {
+        return { status: 'Invalid Product Input', nextState: States.Error };
+      }
+    }
+    if (result.nextState === States.Error) {
+      this._context.status = result.status;
+    }
+    return result;
+  }
+
+  async _handleRestock() {
+    if (this.TODO) {
+      throw new Error('IMPLEMENT _handleRestock');
+    }
+    if (this._context.abort) {
+      return States.Abort;
+    }
+    // TODO: run checking for stock methods
   }
 
   async _handleSwapProxy() {
-    if (this.TODO) {
-      console.log(new Error('IMPLEMENT _handleSwapProxy'));
-    }
-  }
+    const {
+      proxy: oldProxy,
+      data: { errorDelay },
+    } = this._context;
 
-  async _handleCheckStock() {
-    if (this.TODO) {
-      console.log(new Error('IMPLEMENT _handleCheckStock'));
+    try {
+      const newProxy = await this.swapProxies();
+
+      // Proxy is fine, update the references
+      if (newProxy) {
+        this.proxy = newProxy;
+        oldProxy.proxy = newProxy.proxy;
+        this.shouldBanProxy = false; // reset ban flag
+        return this._prevState;
+      }
+
+      // If we get a null proxy back, there aren't any available..
+      await delay(errorDelay);
+      // If we have a hard ban, continue waiting for open proxy
+      if (this.shouldBanProxy) {
+        this._emitEvent({
+          status: `No open proxies! Delaying ${errorDelay}ms...`,
+        });
+      }
+    } catch (err) {
+      this._emitEvent({ status: 'Error swapping proxies!' });
     }
+    // Go back to previous state
+    return this._prevState;
   }
 
   _handleEndState() {
@@ -151,7 +440,7 @@ class Monitor {
     const StateMap = {
       [States.Start]: this._handleStart,
       [States.Parse]: this._handleParse,
-      [States.CheckStock]: this._handleCheckStock,
+      [States.Restock]: this._handleRestock,
       [States.Error]: this._handleEndState,
       [States.Stop]: this._handleEndState,
       [States.Abort]: this._handleEndState,
@@ -181,10 +470,16 @@ class Monitor {
     return false;
   }
 
-  _setup() {
-    if (this.TODO) {
-      console.log(new Error('IMPLEMENT _setup'));
+  async start() {
+    this._prevState = States.Start;
+    this._state = States.Start;
+    let stop = false;
+    while (this._state !== States.Stop && !stop) {
+      // eslint-disable-next-line no-await-in-loop
+      stop = await this.run();
     }
+
+    this._cleanup();
   }
 }
 

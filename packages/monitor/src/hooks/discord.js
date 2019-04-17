@@ -1,5 +1,4 @@
 const { RichEmbed, WebhookClient } = require('discord.js');
-const icon = require('./assets/flex.png');
 
 class Discord {
   constructor(hook) {
@@ -35,7 +34,10 @@ class Discord {
         .addField('Quick Tasks', 'Coming soon...')
         .addField('Full Size Run', 'Coming soon...')
         .setTimestamp()
-        .setFooter('Shopify Monitor | [@FlexEngines](https://twitter.com/flexengines)', icon);
+        .setFooter(
+          'Shopify Monitor | [@FlexEngines](https://twitter.com/flexengines)',
+          'https://i.imgur.com/KelstZo.png',
+        );
 
       return this.hook.send(embed);
     }
