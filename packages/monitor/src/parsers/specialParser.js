@@ -5,9 +5,8 @@ const { ParseType } = require('../monitor/parse');
 const { ErrorCodes, format, userAgent } = require('../constants').Utils;
 
 class SpecialParser extends Parser {
-  constructor(request, task, proxy, name) {
-    super(request, task, proxy, name || 'SpecialParser');
-    this._request = request;
+  constructor(request, data, proxy, name) {
+    super(request, data, proxy, name || 'SpecialParser');
   }
 
   /**
@@ -19,10 +18,10 @@ class SpecialParser extends Parser {
 
   async run() {
     // If parse type is url, use the product's url, otherwise use the site url
-    const { url: siteUrl } = this._task.site;
+    const { url: siteUrl } = this._data.site;
     let initialUrl = siteUrl;
     if (this._type === ParseType.Url) {
-      initialUrl = this._task.product.url;
+      initialUrl = this._data.product.url;
     }
 
     // Make initial request to site

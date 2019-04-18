@@ -6,12 +6,12 @@ class AtomParser extends Parser {
   /**
    * Construct a new AtomParser
    *
-   * @param {Task} task the task we want to parse and match
+   * @param {Object} data the data we want to parse and match
    * @param {Proxy} the proxy to use when making requests
    * @param {Logger} (optional) A logger to log messages to
    */
-  constructor(request, task, proxy) {
-    super(request, task, proxy, 'AtomParser');
+  constructor(request, data, proxy) {
+    super(request, data, proxy, 'AtomParser');
   }
 
   async run() {
@@ -22,7 +22,7 @@ class AtomParser extends Parser {
     try {
       const response = await this._request({
         method: 'GET',
-        uri: `${this._task.site.url}/collections/all.atom`,
+        uri: `${this._data.site.url}/collections/all.atom`,
         proxy: format(this._proxy) || undefined,
         rejectUnauthorized: false,
         json: false,

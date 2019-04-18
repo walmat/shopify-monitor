@@ -1,9 +1,10 @@
+/* eslint-disable class-methods-use-this */
 const SpecialParser = require('./specialParser');
 const { ErrorCodes } = require('../constants').Utils;
 
 class YeezyParser extends SpecialParser {
-  constructor(request, task, proxy) {
-    super(request, task, proxy, 'YeezyParser');
+  constructor(request, data, proxy) {
+    super(request, data, proxy, 'YeezyParser');
   }
 
   // eslint-disable-next-line class-methods-use-this
@@ -17,8 +18,6 @@ class YeezyParser extends SpecialParser {
 
     const validateArray = (arr = [], errorCode = ErrorCodes.ProductNotFound) => {
       if (arr.length === 0) {
-        // If no products are found, throw an error, but specify a special status to stop the task
-        // TODO: Maybe replace with a custom error object?
         const error = new Error('No Items Found');
         error.status = errorCode;
         throw error;
@@ -70,7 +69,7 @@ class YeezyParser extends SpecialParser {
 
   parseProductInfoPageForProduct($) {
     // Proxy the initial page parsing since it works for product pages as well...
-    const [matchedProduct] = this.parseInitialPageForProducts($);
+    const [matchedProduct] = YeezyParser.parseInitialPageForProducts($);
     return matchedProduct;
   }
 }

@@ -57,7 +57,8 @@ const ManagerEvents = {
 const MonitorStates = {
   Start: 'START',
   Parse: 'PARSE',
-  CheckStock: 'CHECK_STOCK',
+  Stock: 'STOCK',
+  Notify: 'NOTIFY',
   SwapProxies: 'SWAP_PROXIES',
   Error: 'ERROR',
   Abort: 'ABORT',

@@ -6,12 +6,11 @@ class XmlParser extends Parser {
   /**
    * Construct a new XmlParser
    *
-   * @param {Task} task the task we want to parse and match
+   * @param {Object} data the data we want to parse and match
    * @param {Proxy} the proxy to use when making requests
    */
-  constructor(request, task, proxy) {
-    super(request, task, proxy, 'XmlParser');
-    this._request = request;
+  constructor(request, data, proxy) {
+    super(request, data, proxy, 'XmlParser');
   }
 
   async run() {
@@ -22,7 +21,7 @@ class XmlParser extends Parser {
     try {
       const response = await this._request({
         method: 'GET',
-        uri: `${this._task.site.url}/sitemap_products_1.xml?from=1&to=299999999999999999`,
+        uri: `${this._data.site.url}/sitemap_products_1.xml?from=1&to=299999999999999999`,
         proxy: format(this._proxy) || undefined,
         rejectUnauthorized: false,
         json: false,

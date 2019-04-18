@@ -85,7 +85,6 @@ class Monitor {
         break;
       }
     }
-    this._logger.silly('Event %s emitted: %j', event, payload);
   }
 
   _handleAbort(id) {
@@ -183,24 +182,9 @@ class Monitor {
   _parseAll() {
     // Create the parsers and start the async run methods
     const parsers = [
-      new AtomParser(
-        this._context.request,
-        this._context.task,
-        this._context.proxy,
-        this._context.logger,
-      ),
-      new JsonParser(
-        this._context.request,
-        this._context.task,
-        this._context.proxy,
-        this._context.logger,
-      ),
-      new XmlParser(
-        this._context.request,
-        this._context.task,
-        this._context.proxy,
-        this._context.logger,
-      ),
+      new AtomParser(this._context.request, this._context.data, this._context.proxy),
+      new JsonParser(this._context.request, this._context.data, this._context.proxy),
+      new XmlParser(this._context.request, this._context.data, this._context.proxy),
     ].map(p => p.run());
     // Return the winner of the race
     return rfrl(parsers, 'parseAll');
@@ -221,9 +205,9 @@ class Monitor {
     if (nextState) {
       return { nextState, status };
     }
-    this._context.task.product.variants = variants;
-    this._context.task.product.url = `${site.url}/products/${parsed.handle}`;
-    this._context.task.product.name = parsed.title;
+    this._context.data.product.variants = variants;
+    this._context.data.product.url = `${site.url}/products/${parsed.handle}`;
+    this._context.data.product.name = parsed.title;
     return {
       status: `Found product: ${this._context.task.product.name}`,
       nextState: States.CheckStock,
@@ -256,7 +240,7 @@ class Monitor {
       }
 
       this._context.data.product.restockUrl = url; // Store restock url in case all variants are out of stock
-      const { variants, nextState, status } = this._generateVariants(fullProductInfo);
+      const { variants, nextState, status } = Monitor._generateVariants(fullProductInfo);
       // check for next state (means we hit an error when generating variants)
       if (nextState) {
         return { nextState, status };
@@ -298,7 +282,7 @@ class Monitor {
     if (product.variant) {
       variants = [product.variant];
     } else {
-      ({ variants, nextState, status } = this._generateVariants(parsed));
+      ({ variants, nextState, status } = Monitor._generateVariants(parsed));
       // check for next state (means we hit an error when generating variants)
       if (nextState) {
         return { nextState, status };
@@ -339,11 +323,6 @@ class Monitor {
 
     let result;
     switch (this._parseType) {
-      case ParseType.Variant: {
-        this._context.data.product.variants = [variant];
-        result = { nextState: States.Restock };
-        break;
-      }
       case ParseType.Url: {
         result = await this._monitorUrl();
         break;
@@ -366,14 +345,18 @@ class Monitor {
     return result;
   }
 
-  async _handleRestock() {
-    if (this.TODO) {
-      throw new Error('IMPLEMENT _handleRestock');
-    }
+  async _handleStock() {
     if (this._context.abort) {
       return States.Abort;
     }
     // TODO: run checking for stock methods
+  }
+
+  async _handleNotify() {
+    if (this._context.abort) {
+      return States.Abort;
+    }
+    // TODO: send webhooks
   }
 
   async _handleSwapProxy() {
@@ -440,7 +423,9 @@ class Monitor {
     const StateMap = {
       [States.Start]: this._handleStart,
       [States.Parse]: this._handleParse,
-      [States.Restock]: this._handleRestock,
+      [States.Stock]: this._handleStock,
+      [States.Notify]: this._handleNotify,
+      [States.SwapProxies]: this._handleSwapProxy,
       [States.Error]: this._handleEndState,
       [States.Stop]: this._handleEndState,
       [States.Abort]: this._handleEndState,

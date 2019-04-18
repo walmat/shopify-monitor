@@ -5,15 +5,16 @@ class JsonParser extends Parser {
   /**
    * Construct a new JsonParser
    *
-   * @param {Task} task the task we want to parse and match
+   * @param {Class} request request.js constructor
+   * @param {Object} data the data we want to parse and match
    * @param {Proxy} the proxy to use when making requests
    */
-  constructor(request, task, proxy) {
-    super(request, task, proxy, 'JsonParser');
+  constructor(request, data, proxy) {
+    super(request, data, proxy, 'JsonParser');
   }
 
   async run() {
-    const { url } = this._task.site;
+    const { url } = this._data.site;
     let products;
     try {
       const response = await this._request({

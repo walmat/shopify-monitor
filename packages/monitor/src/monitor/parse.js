@@ -4,7 +4,6 @@ const { isSpecialSite } = require('./siteOptions');
 
 const ParseType = {
   Unknown: 'UNKNOWN',
-  Variant: 'VARIANT',
   Url: 'URL',
   Keywords: 'KEYWORDS',
   Special: 'SPECIAL',
@@ -13,9 +12,8 @@ const ParseType = {
 /**
  * Determine the type of parsing we need to
  * perform based the contents of the given
- * Task Product.
  *
- * @param {TaskProduct} product
+ * @param {Object} product
  */
 function getParseType(product, site) {
   if (!product) {
@@ -24,10 +22,6 @@ function getParseType(product, site) {
 
   if (site && isSpecialSite(site)) {
     return ParseType.Special;
-  }
-
-  if (product.variant) {
-    return ParseType.Variant;
   }
 
   if (product.url) {

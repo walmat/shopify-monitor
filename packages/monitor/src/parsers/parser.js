@@ -1,5 +1,5 @@
 /* eslint-disable class-methods-use-this */
-const { ParseType, getParseType, matchVariant, matchKeywords } = require('../monitor/parse');
+const { ParseType, getParseType, matchKeywords } = require('../monitor/parse');
 const { ErrorCodes, format, userAgent, rfrl } = require('../constants').Utils;
 
 class Parser {
@@ -75,12 +75,12 @@ class Parser {
   /**
    * Construct a new parser
    */
-  constructor(request, task, proxy, name) {
+  constructor(request, data, proxy, name) {
     this._name = name || 'Parser';
     this._proxy = proxy;
     this._request = request;
-    this._task = task;
-    this._type = getParseType(task.product);
+    this._data = data;
+    this._type = getParseType(data.product);
   }
 
   /**
@@ -99,21 +99,12 @@ class Parser {
    */
   match(products) {
     switch (this._type) {
-      case ParseType.Variant: {
-        const product = matchVariant(products, this._task.product.variant, this._logger);
-        if (!product) {
-          const error = new Error('ProductNotFound');
-          error.status = ErrorCodes.ProductNotFound;
-          throw error;
-        }
-        return product;
-      }
       case ParseType.Keywords: {
         const keywords = {
-          pos: this._task.product.pos_keywords,
-          neg: this._task.product.neg_keywords,
+          pos: this._data.product.pos_keywords,
+          neg: this._data.product.neg_keywords,
         };
-        const product = matchKeywords(products, keywords, this._logger); // no need to use a custom filter at this point...
+        const product = matchKeywords(products, keywords);
         if (!product) {
           // TODO: Maybe replace with a custom error object?
           const error = new Error('ProductNotFound');
