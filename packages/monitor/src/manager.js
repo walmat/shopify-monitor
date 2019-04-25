@@ -1,5 +1,6 @@
 const EventEmitter = require('eventemitter3');
 const shortid = require('shortid');
+const { union } = require('underscore');
 
 const Monitor = require('./monitor');
 const ProxyManager = require('./proxy');
@@ -265,10 +266,28 @@ class Manager {
    * @param {List} param0 [monitor id, monitor data, proxy]
    */
   async _start([id, data, proxy]) {
-    const monitor = new Monitor(id, data, proxy);
+    const { site, product } = data;
+
+    // see if we currently have a monitor running that is on that site
+    let monitor = Object.keys(this._monitors).find(k => {
+      if (this._monitors[k].data.site.url === site.url) {
+        return this._monitors[k];
+      }
+    });
+
     if (!monitor) {
-      return;
+      // if we didn't find an existing monitor, setup a new one
+      monitor = new Monitor(id, data, proxy);
+    } else {
+      // otherwise, add to the keywords (filtering out duplicates)..
+      const { positive, negative } = monitor.data.product;
+      monitor.data.product = {
+        ...monitor.data.product,
+        positive: union(positive, product.positive),
+        negative: union(negative, product.negative),
+      };
     }
+
     // monitor.site = monitor.site.url;
     this._monitors[id] = monitor;
 

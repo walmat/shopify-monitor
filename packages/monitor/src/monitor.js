@@ -14,6 +14,10 @@ class Monitor {
     return this._state;
   }
 
+  get data() {
+    return this._data;
+  }
+
   constructor(id, data, proxy) {
     this._id = id;
     this._data = data;
