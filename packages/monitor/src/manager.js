@@ -1,14 +1,9 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-param-reassign */
 const EventEmitter = require('eventemitter3');
-const hash = require('object-hash');
 const shortid = require('shortid');
 
 const Monitor = require('./monitor');
-const { Events } = require('./constants').Manager;
-
-const BANNED_PROXY_TIMEOUT = 120000;
-const PROXY_RETRY_TIMEOUT = 100;
+const ProxyManager = require('./proxy');
+const { Events } = require('./utils/constants').Manager;
 
 class Manager {
   constructor() {
@@ -16,7 +11,7 @@ class Manager {
 
     this._monitors = {};
     this._handlers = {};
-    this._proxies = new Map();
+    this._proxyManager = new ProxyManager();
 
     this.mergeStatusUpdates = this.mergeStatusUpdates.bind(this);
   }
@@ -38,174 +33,6 @@ class Manager {
   }
 
   /**
-   * Handler for registering a proxy for use
-   * (NOTE: Prevents multiple re-registering)
-   * @param {Object} proxy - proxy object
-   */
-  registerProxy(proxy) {
-    let proxyId;
-    const proxyHash = hash(proxy);
-
-    for (const val of this._proxies.values()) {
-      if (val.hash.includes(proxyHash)) {
-        return;
-      }
-    }
-
-    do {
-      proxyId = shortid.generate();
-    } while (this._proxies.get(proxyId));
-
-    this._proxies.set(proxyId, {
-      id: proxyId,
-      hash: proxyHash,
-      proxy,
-      banList: {},
-      useList: {},
-    });
-  }
-
-  /**
-   * Handler for mass registering proxies
-   * @param {List<Object>} proxies - list of proxy objects
-   */
-  registerProxies(proxies) {
-    proxies.forEach(p => this.registerProxy(p));
-  }
-
-  /**
-   * Handler for deregistering a proxy for when they remove it
-   * from the list of proxies on the frontend.
-   * @param {Object} proxy - proxy object
-   */
-  deregisterProxy(proxy) {
-    const proxyHash = hash(proxy);
-    let storedProxy = null;
-    for (const val of this._proxies.values()) {
-      if (val.hash === proxyHash) {
-        storedProxy = val;
-        break;
-      }
-    }
-
-    if (!storedProxy) {
-      return;
-    }
-    this._proxies.delete(storedProxy.id);
-  }
-
-  /**
-   * Hanlder for mass degistering proxies
-   * @param {List<Object>} proxies - list of proxy objects
-   */
-  deregisterProxies(proxies) {
-    proxies.forEach(p => this.deregisterProxy(p));
-  }
-
-  /**
-   * Handler for assigning a new proxy to the monitor instance
-   * @param {String} site - site (url) being monitored
-   * @param {Boolean} wait - whether or not to wait for an open proxy
-   * @param {Number} timeout - the timeout to recheck for an open proxy
-   */
-  assignProxy(site, wait = false, timeout = 5) {
-    if (!timeout || Number.isNaN(timeout) || timeout < 0) {
-      timeout = 0;
-    }
-    let proxy = null;
-
-    for (const val of this._proxies.values()) {
-      if (!val.useList[site] && !val.banList[site]) {
-        proxy = val;
-        break;
-      }
-    }
-    if (proxy) {
-      proxy.useList[site] = true;
-      this._proxies.set(proxy.id, proxy);
-      return proxy;
-    }
-    if (!wait || timeout === 0) {
-      return null;
-    }
-    return new Promise(resolve => {
-      setTimeout(() => resolve(this.assignProxy(site, wait, timeout - 1)), PROXY_RETRY_TIMEOUT);
-      // TODO: do we need to clear the interval here?
-    });
-  }
-
-  /**
-   * Handler for freeing up a proxy in two cases:
-   * 1. When a proxy is banned and swapped out
-   * 2. When the monitor process closes and proxies need released during cleanup
-   *
-   * @param {String} id - incoming proxy id
-   * @param {String} site - incoming monitor's site (url)
-   * @param {Boolean} force - whether or not to force free the `banList` and `useList`
-   */
-  releaseProxy(id, site, force = false) {
-    const proxy = this._proxies.get(id);
-    if (!proxy) {
-      return;
-    }
-
-    if (force) {
-      delete proxy.banList[site];
-      delete proxy.useList[site];
-    } else {
-      delete proxy.useList[site];
-    }
-  }
-
-  /**
-   * Handles timing out a proxy for `BANNED_PROXY_TIMEOUT`
-   * @param {String} id - id of the incoming proxy
-   * @param {String} site - site (url) of the incoming monitor
-   */
-  timeoutProxy(id, site) {
-    const proxy = this._proxies.get(id);
-    if (!proxy) {
-      return;
-    }
-
-    // free up the useList, but wait 2 min. to lift the ban
-    delete proxy.useList[site];
-    proxy.banList[site] = true;
-    setTimeout(() => {
-      delete proxy.banList[site];
-    }, BANNED_PROXY_TIMEOUT); // TODO: play around with this timeout more!
-  }
-
-  /**
-   * Method to handle releasing/banning old proxy as well as
-   * getting a new proxy to assign to the monitor
-   * @param {String} id - proxy id being used
-   * @param {String} site - site (url) being monitored
-   * @param {Boolean} shouldBan - whether or not to ban
-   */
-  swapProxy(id, site, shouldBan = true) {
-    let release = true;
-
-    const oldProxy = this._proxies.get(id);
-    if (!oldProxy) {
-      release = false;
-    }
-
-    const newProxy = this.assignProxy(site);
-    if (!newProxy) {
-      return null;
-    }
-
-    if (release) {
-      if (shouldBan) {
-        this.timeoutProxy(id, site);
-      }
-      this.releaseProxy(id, site);
-    }
-    return newProxy;
-  }
-
-  /**
    * Handler for emitting the swapped proxy event
    * @param {String} id - monitor id that is listening on the event
    * @param {Object} proxy - old proxy being used
@@ -214,7 +41,7 @@ class Manager {
   async handleProxySwap(id, proxy, shouldBan) {
     const proxyId = proxy ? proxy.id : null;
     const { site } = this._monitors[id];
-    const newProxy = await this.swapProxy(proxyId, site, shouldBan);
+    const newProxy = await this._proxyManager.swap(proxyId, site, shouldBan);
     this._events.emit(Events.SendProxy, id, newProxy);
   }
 
@@ -261,7 +88,7 @@ class Manager {
     do {
       id = shortid.generate();
     } while (this._monitors[id]);
-    const openProxy = await this.assignProxy(site);
+    const openProxy = await this._proxyManager.reserve(site);
     return { id, openProxy };
   }
 
@@ -273,7 +100,7 @@ class Manager {
     const { proxy, site } = this._monitors[id];
     delete this._monitors[id];
     if (proxy) {
-      this.releaseProxy(proxy.id, site, true);
+      this._proxyManager.release(proxy.id, site, true);
     }
   }
 

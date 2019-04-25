@@ -1,6 +1,6 @@
 const Parser = require('./parser');
 const { ParseType, convertToJson } = require('../monitor/parse');
-const { format, userAgent } = require('../constants').Utils;
+const { format, userAgent } = require('../utils/constants').Utils;
 
 class XmlParser extends Parser {
   /**

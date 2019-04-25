@@ -1,10 +1,10 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
-const { delay, rfrl, ErrorCodes, format, userAgent } = require('./constants').Utils;
-const { States, Events, Delays, Hooks } = require('./constants').Monitor;
-const ManagerEvents = require('./constants').Manager.Events;
-const { ParseType, getParseType } = require('./monitor/parse');
-const { generateAvailableVariants } = require('./monitor/generateVariants');
+const { delay, rfrl, ErrorCodes, format, userAgent } = require('./utils/constants').Utils;
+const { States, Events, Delays, Hooks } = require('./utils/constants').Monitor;
+const ManagerEvents = require('./utils/constants').Manager.Events;
+const { ParseType, getParseType } = require('./utils/parse');
+const { generateAvailableVariants } = require('./utils/generateVariants');
 const { Parser, AtomParser, JsonParser, XmlParser, getSpecialParser } = require('./parsers');
 
 const { Discord, Slack } = require('./hooks');
@@ -45,6 +45,27 @@ class Monitor {
     this._handleAbort = this._handleAbort.bind(this);
     this._events.on(ManagerEvents.ChangeDelay, this._changeDelay, this);
     this._events.on(ManagerEvents.ChangeWebhook, this._changeWebhook, this);
+  }
+
+  async swapProxies() {
+    // emit the swap event
+    this._events.emit(Events.SwapProxy, this.id, this.proxy, this.shouldBanProxy);
+    return new Promise((resolve, reject) => {
+      let timeout;
+      const proxyHandler = (id, proxy) => {
+        clearTimeout(timeout);
+        timeout = null;
+        this.shouldBanProxy = 0;
+        resolve(proxy);
+      };
+      timeout = setTimeout(() => {
+        this._events.removeListener(Events.ReceiveProxy, proxyHandler);
+        if (timeout) {
+          reject(new Error('Timeout'));
+        }
+      }, 10000); // TODO: Make this a variable delay?
+      this._events.once(Events.ReceiveProxy, proxyHandler);
+    });
   }
 
   // MARK: Event Registration
@@ -198,16 +219,16 @@ class Monitor {
     } catch (errors) {
       return this._handleParsingErrors(errors);
     }
-    this._context.data.product.restockUrl = parsed.url; // Store restock url in case all variants are out of stock
-    const { site } = this._context.data;
+    const { site, product } = this._context.data;
+    product.restockUrl = parsed.url; // Store restock url in case all variants are out of stock
     const { variants, nextState, status } = Monitor._generateVariants(parsed);
     // check for next state (means we hit an error when generating variants)
     if (nextState) {
       return { nextState, status };
     }
-    this._context.data.product.variants = variants;
-    this._context.data.product.url = `${site.url}/products/${parsed.handle}`;
-    this._context.data.product.name = parsed.title;
+    product.variants = variants;
+    product.url = `${site.url}/products/${parsed.handle}`;
+    product.name = parsed.title;
     return {
       status: `Found product: ${this._context.task.product.name}`,
       nextState: States.CheckStock,
@@ -298,51 +319,37 @@ class Monitor {
     };
   }
 
-  async _handleStart() {
-    if (this._context.abort) {
-      return States.Abort;
-    }
-    this._emitEvent(Events.Status, {
-      status: 'Starting...',
-      proxy: this._context.proxy,
-    });
-    return States.Parse;
-  }
-
   async _handleParse() {
-    const {
-      abort,
-      data: {
-        product: { variant },
-      },
-    } = this._context;
+    const { abort } = this._context;
+    let { status: message } = this._context;
 
     if (abort) {
       return States.Abort;
     }
 
-    let result;
+    let nextState;
+    let status;
     switch (this._parseType) {
       case ParseType.Url: {
-        result = await this._monitorUrl();
+        { nextState, status } = await this._monitorUrl();
         break;
       }
       case ParseType.Keywords: {
-        result = await this._monitorKeywords();
+        { nextState, status } = await this._monitorKeywords();
         break;
       }
       case ParseType.Special: {
-        result = await this._monitorSpecial();
+        { nextState, status } = await this._monitorSpecial();
         break;
       }
       default: {
         return { status: 'Invalid Product Input', nextState: States.Error };
       }
     }
-    if (result.nextState === States.Error) {
-      this._context.status = result.status;
+    if (nextState === States.Error) {
+      message = status;
     }
-    return result;
+    return { nextState, status: message };
   }
 
   async _handleStock() {
@@ -372,14 +379,14 @@ class Monitor {
       if (newProxy) {
         this.proxy = newProxy;
         oldProxy.proxy = newProxy.proxy;
-        this.shouldBanProxy = false; // reset ban flag
+        this.shouldBanProxy = 0; // reset ban flag
         return this._prevState;
       }
 
       // If we get a null proxy back, there aren't any available..
       await delay(errorDelay);
       // If we have a hard ban, continue waiting for open proxy
-      if (this.shouldBanProxy) {
+      if (this.shouldBanProxy > 0) {
         this._emitEvent({
           status: `No open proxies! Delaying ${errorDelay}ms...`,
         });
@@ -421,7 +428,6 @@ class Monitor {
     }
 
     const StateMap = {
-      [States.Start]: this._handleStart,
       [States.Parse]: this._handleParse,
       [States.Stock]: this._handleStock,
       [States.Notify]: this._handleNotify,
@@ -456,8 +462,8 @@ class Monitor {
   }
 
   async start() {
-    this._prevState = States.Start;
-    this._state = States.Start;
+    this._prevState = States.Parse;
+    this._state = States.Parse;
     let stop = false;
     while (this._state !== States.Stop && !stop) {
       // eslint-disable-next-line no-await-in-loop

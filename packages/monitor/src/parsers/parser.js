@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
 const { ParseType, getParseType, matchKeywords } = require('../monitor/parse');
-const { ErrorCodes, format, userAgent, rfrl } = require('../constants').Utils;
+const { ErrorCodes, format, userAgent, rfrl } = require('../utils/constants').Utils;
 
 class Parser {
   /**

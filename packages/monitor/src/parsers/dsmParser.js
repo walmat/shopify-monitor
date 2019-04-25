@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 const SpecialParser = require('./specialParser');
 const { ParseType, matchKeywords } = require('../monitor/parse');
-const { ErrorCodes } = require('../constants').Utils;
+const { ErrorCodes } = require('../utils/constants').Utils;
 
 /**
  * Base Special Parser for all DSM Sites

@@ -1,4 +1,4 @@
-const { ErrorCodes } = require('../constants').Utils;
+const { ErrorCodes } = require('./constants').Utils;
 
 function generateAvailableVariants(product) {
   // Filter out unavailable variants first
