@@ -164,19 +164,31 @@ class Monitor {
   }
 
   async _handleParsingErrors(errors) {
-    // consolidate statuses
-    const statuses = errors.map(error => error.status);
-    // Check for bans
-    let checkStatus = statuses.every(s => s === 403 || s === 429 || s === 430);
-    if (checkStatus) {
+    let delayStatus;
+    let ban = true; // assume we have a softban
+    let hardBan = false; // assume we don't have a hardban
+    errors.forEach(({ status }) => {
+      if (status === 403) {
+        // ban is a strict hardban, so set the flag
+        hardBan = true;
+      } else if (status !== 429 && status !== 430) {
+        // status is neither 403, 429, 430, so set ban to false
+        ban = false;
+      }
+      if (!delayStatus && (status === ErrorCodes.VariantsNotAvailable || status >= 400)) {
+        delayStatus = status; // find the first error that is either a product not found or 4xx response
+      }
+    });
+    if (ban || hardBan) {
+      // we can assume that it's a soft ban by default since it's either ban || hardBan
+      const shouldBan = hardBan ? 2 : 1;
       return {
-        status: 'Swapping proxy',
-        shouldBan: true,
+        message: 'Swapping proxy',
+        shouldBan,
         nextState: States.SwapProxies,
       };
     }
-    checkStatus = statuses.find(s => s === ErrorCodes.ProductNotFound || s >= 400);
-    return this._delay(checkStatus || 404);
+    return this._delay(delayStatus || 404);
   }
 
   static _generateVariants(product) {
