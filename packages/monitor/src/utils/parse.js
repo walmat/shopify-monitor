@@ -15,20 +15,24 @@ const ParseType = {
  *
  * @param {Object} product
  */
-function getParseType(product, site) {
-  if (!product) {
+function getParseType(keywords, site) {
+  console.log('determining %s parsing type: %j', site.url, keywords);
+  if (!keywords) {
     return ParseType.Unknown;
   }
 
   if (site && isSpecialSite(site)) {
+    console.log('special');
     return ParseType.Special;
   }
 
-  if (product.url) {
+  if (keywords.url) {
+    console.log('url');
     return ParseType.Url;
   }
 
-  if (product.pos_keywords && product.neg_keywords) {
+  if (keywords.positive && keywords.negative) {
+    console.log('keywords');
     return ParseType.Keywords;
   }
 

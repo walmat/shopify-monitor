@@ -1,5 +1,5 @@
 const Parser = require('./parser');
-const { ParseType, convertToJson } = require('../monitor/parse');
+const { ParseType, convertToJson } = require('../utils/parse');
 const { format, userAgent } = require('../utils/constants').Utils;
 
 class AtomParser extends Parser {

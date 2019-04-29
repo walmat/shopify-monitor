@@ -119,11 +119,13 @@ class Manager {
    * @param {Object} data - mapped from `monitorInfo` in `packages/structures/src/definitions/monitorInfo.js`
    */
   async start(data) {
+    console.log('starting...');
     const alreadyStarted = Object.values(this._monitors).find(s => s.id === data.id);
     if (alreadyStarted) {
       return;
     }
     const { id, openProxy } = await this.setup(data.site.url);
+    console.log('id: %s, proxy: %j', id, openProxy);
 
     this._start([id, data, openProxy]).then(() => {
       this.cleanup(id);
@@ -266,7 +268,9 @@ class Manager {
    * @param {List} param0 [monitor id, monitor data, proxy]
    */
   async _start([id, data, proxy]) {
-    const { site, product } = data;
+    const { site, keywords } = data;
+
+    console.log('running on site: %s', site.url);
 
     // see if we currently have a monitor running that is on that site
     let monitor = Object.keys(this._monitors).find(k => {
@@ -278,13 +282,14 @@ class Manager {
     if (!monitor) {
       // if we didn't find an existing monitor, setup a new one
       monitor = new Monitor(id, data, proxy);
+      console.log('created new monitor: %j', monitor.id);
     } else {
+      console.log('found existing monitor: %s', monitor.id);
       // otherwise, add to the keywords (filtering out duplicates)..
-      const { positive, negative } = monitor.data.product;
-      monitor.data.product = {
-        ...monitor.data.product,
-        positive: union(positive, product.positive),
-        negative: union(negative, product.negative),
+      const { positive, negative } = monitor.data.keywords;
+      monitor.data.keywords = {
+        positive: union(positive, keywords.positive),
+        negative: union(negative, keywords.negative),
       };
     }
 

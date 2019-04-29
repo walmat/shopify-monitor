@@ -1,5 +1,5 @@
 /* eslint-disable class-methods-use-this */
-const { ParseType, getParseType, matchKeywords } = require('../monitor/parse');
+const { ParseType, getParseType, matchKeywords } = require('../utils/parse');
 const { ErrorCodes, format, userAgent, rfrl } = require('../utils/constants').Utils;
 
 class Parser {
@@ -101,8 +101,8 @@ class Parser {
     switch (this._type) {
       case ParseType.Keywords: {
         const keywords = {
-          pos: this._data.product.pos_keywords,
-          neg: this._data.product.neg_keywords,
+          pos: this._data.product.positive,
+          neg: this._data.product.negative,
         };
         const product = matchKeywords(products, keywords);
         if (!product) {

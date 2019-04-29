@@ -8,6 +8,7 @@ const { generateAvailableVariants } = require('./utils/generateVariants');
 const { Parser, AtomParser, JsonParser, XmlParser, getSpecialParser } = require('./parsers');
 
 const { Discord, Slack } = require('./hooks');
+const Product = require('./product');
 
 class Monitor {
   get state() {
@@ -16,6 +17,14 @@ class Monitor {
 
   get data() {
     return this._data;
+  }
+
+  get id() {
+    return this._id;
+  }
+
+  get proxy() {
+    return this._proxy;
   }
 
   constructor(id, data, proxy) {
@@ -28,12 +37,14 @@ class Monitor {
       jar: request.jar(),
     });
 
+    this._products = [];
     this.stop = false;
     this._state = States.Start;
 
     this._context = {
       id,
       data,
+      products: this._products,
       proxy: proxy ? proxy.proxy : null,
       status: null,
       request: this._request,
@@ -42,7 +53,7 @@ class Monitor {
       abort: false,
     };
 
-    this._parseType = getParseType(this._context.data.product, this._context.data.site);
+    this._parseType = getParseType(this._context.data.keywords, this._context.data.site);
 
     this._events = new EventEmitter();
 
@@ -160,6 +171,7 @@ class Monitor {
         break;
     }
     await delay(timeout);
+    console.log('monitoring...');
     return { status: `Monitoring...`, nextState: States.Parse };
   }
 
@@ -205,7 +217,7 @@ class Monitor {
       if (err.code === ErrorCodes.VariantsNotAvailable) {
         return {
           status: 'Restock Mode',
-          nextState: States.Restock,
+          nextState: States.Stock,
         };
       }
       return {
@@ -235,19 +247,24 @@ class Monitor {
     } catch (errors) {
       return this._handleParsingErrors(errors);
     }
-    const { site, product } = this._context.data;
-    product.restockUrl = parsed.url; // Store restock url in case all variants are out of stock
+    const { site } = this._context.data;
     const { variants, nextState, status } = Monitor._generateVariants(parsed);
+    const product = new Product(
+      site,
+      `${site.url}/products/${parsed.handle}`,
+      parsed.title,
+      null,
+      variants,
+      0,
+    );
+    this._products.push(product);
     // check for next state (means we hit an error when generating variants)
     if (nextState) {
       return { nextState, status };
     }
-    product.variants = variants;
-    product.url = `${site.url}/products/${parsed.handle}`;
-    product.name = parsed.title;
     return {
       status: `Found product: ${this._context.task.product.name}`,
-      nextState: States.CheckStock,
+      nextState: States.Parse,
     };
   }
 
@@ -331,31 +348,31 @@ class Monitor {
     this._context.data.product.name = parsed.title;
     return {
       status: `Found product: ${this._context.data.product.name}`,
-      nextState: States.CheckStock,
+      nextState: States.Parse,
     };
   }
 
   async _handleParse() {
     const { abort } = this._context;
-    let { status: message } = this._context;
+    const { status } = this._context;
 
     if (abort) {
       return States.Abort;
     }
 
     let nextState;
-    let status;
+    let newStatus;
     switch (this._parseType) {
       case ParseType.Url: {
-        { nextState, status } = await this._monitorUrl();
+        ({ nextState, status: newStatus } = await this._monitorUrl());
         break;
       }
       case ParseType.Keywords: {
-        { nextState, status } = await this._monitorKeywords();
+        ({ nextState, status: newStatus } = await this._monitorKeywords());
         break;
       }
       case ParseType.Special: {
-        { nextState, status } = await this._monitorSpecial();
+        ({ nextState, status: newStatus } = await this._monitorSpecial());
         break;
       }
       default: {
@@ -363,9 +380,9 @@ class Monitor {
       }
     }
     if (nextState === States.Error) {
-      message = status;
+      newStatus = status;
     }
-    return { nextState, status: message };
+    return { nextState, status: newStatus };
   }
 
   async _handleStock() {
@@ -462,6 +479,8 @@ class Monitor {
     if (this._context.abort) {
       nextState = States.Abort;
     }
+
+    console.log('handling state: %s', this._state);
 
     try {
       nextState = await this._handleState(this._state);

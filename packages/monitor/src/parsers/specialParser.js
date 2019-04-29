@@ -1,7 +1,7 @@
 /* eslint-disable class-methods-use-this */
 const cheerio = require('cheerio');
 const Parser = require('./parser');
-const { ParseType } = require('../monitor/parse');
+const { ParseType } = require('../utils/parse');
 const { ErrorCodes, format, userAgent } = require('../utils/constants').Utils;
 
 class SpecialParser extends Parser {
