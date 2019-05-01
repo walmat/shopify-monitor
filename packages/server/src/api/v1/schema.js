@@ -12,6 +12,8 @@ const {
   graphql: {
     MonitorInfoType,
     MonitorInfoInputType,
+    ProductType,
+    ProductInputType,
     ProxyType,
     ProxyStringInputType,
     ProxyDataInputType,
@@ -19,6 +21,8 @@ const {
     SettingsInputType,
     SiteType,
     SiteInputType,
+    WebhookGroupType,
+    WebhookGroupInputType,
   },
 } = structures;
 
@@ -26,6 +30,22 @@ const query = new GraphQLObjectType({
   name: 'QueryAPI',
   description: 'Query API for Shopify Monitor',
   fields: () => ({
+    products: {
+      type: GraphQLList(GraphQLNonNull(ProductType)),
+      description: 'Retrieve all matched products',
+      resolve: root => root.browseProducts(),
+    },
+    product: {
+      type: ProductType,
+      description: 'Retrieve matched product for a specific id',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of product to retrieve',
+        },
+      },
+      resolve: (root, { id }) => root.readProduct(id),
+    },
     proxies: {
       type: GraphQLList(GraphQLNonNull(ProxyType)),
       description: 'Retrieve all proxies',
@@ -47,9 +67,25 @@ const query = new GraphQLObjectType({
       description: 'Retrieve settings',
       resolve: root => root.getSettings(),
     },
+    webhookGroups: {
+      type: GraphQLList(GraphQLNonNull(WebhookGroupType)),
+      description: 'Retrieve stored webhook groups',
+      resolve: root => root.browseWebhookGroups(),
+    },
+    webhookGroup: {
+      type: WebhookGroupType,
+      description: 'Retrieve webhook group for specific id',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of webhook group to retrieve',
+        },
+      },
+      resolve: (root, { id }) => root.readWebhookGroup(id),
+    },
     webhooks: {
       type: GraphQLList(GraphQLNonNull(SiteType)),
-      description: 'Retrieve stored webhooks',
+      description: 'Retrieve stored webhooks from all groups',
       resolve: root => root.browseWebhooks(),
     },
     webhook: {
@@ -60,8 +96,16 @@ const query = new GraphQLObjectType({
           type: GraphQLNonNull(GraphQLString),
           description: 'id of webhook to retrieve',
         },
+        groupId: {
+          type: GraphQLString,
+          description: 'id of group to narrow down search (Optional)',
+        },
+        groupName: {
+          type: GraphQLString,
+          description: 'name of group to narrow down search (Optional)',
+        },
       },
-      resolve: (root, { id }) => root.readWebhook(id),
+      resolve: (root, { id, groupId, groupName }) => root.readWebhook(id, groupId, groupName),
     },
     monitors: {
       type: GraphQLList(GraphQLNonNull(MonitorInfoType)),
@@ -86,6 +130,32 @@ const mutation = new GraphQLObjectType({
   name: 'MutationAPI',
   description: 'Mutation API for Shopify Monitor',
   fields: () => ({
+    addProduct: {
+      type: ProductType,
+      description: 'Add a new product',
+      args: {
+        data: {
+          type: GraphQLNonNull(ProductInputType),
+          description: 'Product data to store',
+        },
+      },
+      resolve: (root, { data }) => root.addProduct(data),
+    },
+    editProduct: {
+      type: ProductType,
+      description: 'Edit an existing product with new data',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of product to edit',
+        },
+        data: {
+          type: GraphQLNonNull(ProductInputType),
+          description: 'Product data to store',
+        },
+      },
+      resolve: (root, { id, data }) => root.editProduct(id, data),
+    },
     addProxyFromString: {
       type: ProxyType,
       description: 'Add a new proxy from a raw string input',
@@ -149,6 +219,32 @@ const mutation = new GraphQLObjectType({
       },
       resolve: (root, { data }) => root.updateSettings(data),
     },
+    addWebhookGroup: {
+      type: WebhookGroupType,
+      description: 'Add a new webhook group',
+      args: {
+        data: {
+          type: GraphQLNonNull(WebhookGroupInputType),
+          description: 'Webhook group info to add',
+        },
+      },
+      resolve: (root, { data }) => root.addWebhookGroup(data),
+    },
+    editWebhookGroup: {
+      type: WebhookGroupType,
+      description: 'Edit an existing webhook group',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of webhook group to update',
+        },
+        data: {
+          type: GraphQLNonNull(WebhookGroupInputType),
+          description: 'Webhook group info to update',
+        },
+      },
+      resolve: (root, { id, data }) => root.editWebhookGroup(id, data),
+    },
     addWebhook: {
       type: SiteType,
       description: 'Add a new webhook',
@@ -157,8 +253,12 @@ const mutation = new GraphQLObjectType({
           type: GraphQLNonNull(SiteInputType),
           description: 'webhook info to add',
         },
+        groupId: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'webhook group to associate with the webhook',
+        },
       },
-      resolve: (root, { data }) => root.addWebhook(data),
+      resolve: (root, { data, groupId }) => root.addWebhook(data, groupId),
     },
     editWebhook: {
       type: SiteType,
@@ -172,8 +272,12 @@ const mutation = new GraphQLObjectType({
           type: GraphQLNonNull(SiteInputType),
           description: 'updated webhook info',
         },
+        groupId: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'webhook group associated with webhook',
+        },
       },
-      resolve: (root, { data }) => root.editWebhook(data),
+      resolve: (root, { id, data, groupId }) => root.editWebhook(id, data, groupId),
     },
     addMonitor: {
       type: MonitorInfoType,

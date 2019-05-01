@@ -1,7 +1,16 @@
+import uuidv4 from 'uuid/v4';
+
 import { MemoryStore, RedisStore, Datasources } from '@monitor/datastore';
 import { initialStates, utils } from '@monitor/structures';
 
-const { monitorInfoState, proxyState, settingsState, siteState } = initialStates;
+const {
+  monitorInfoState,
+  productState,
+  proxyState,
+  settingsState,
+  siteState,
+  webhookGroupState,
+} = initialStates;
 const { buildProxyInfo } = utils;
 
 class Resolver {
@@ -15,6 +24,34 @@ class Resolver {
     } else {
       this.store = new MemoryStore();
     }
+  }
+
+  async browseProducts() {
+    return this.store.products.browse();
+  }
+
+  async readProduct(id) {
+    return this.store.products.read(id);
+  }
+
+  async addProduct(data) {
+    // Supplement missing data with initial state until
+    // partial product objects are supported
+    const productData = {
+      ...productState,
+      ...data,
+    };
+    return this.store.products.add(productData);
+  }
+
+  async editProduct(id, data) {
+    // Supplement missing data with initial state until
+    // partial product objects are supported
+    const productData = {
+      ...productState,
+      ...data,
+    };
+    return this.store.products.edit(id, productData);
   }
 
   async browseProxies() {
@@ -101,32 +138,124 @@ class Resolver {
     return settings;
   }
 
+  async browseWebhookGroups() {
+    return this.store.webhooks.browse();
+  }
+
+  async readWebhookGroup(id) {
+    return this.store.webhooks.read(id);
+  }
+
+  async addWebhookGroup(data) {
+    // Supplement missing data with initial state until
+    // partial webhook group objects are supported
+    const groupData = {
+      ...webhookGroupState,
+      ...data,
+    };
+    return this.store.webhooks.add(groupData);
+  }
+
+  async editWebhookGroup(id, data) {
+    // Supplement missing data with initial state until
+    // partial webhook group objects are supported
+    const groupData = {
+      ...webhookGroupState,
+      ...data,
+    };
+    return this.store.webhooks.edit(id, groupData);
+  }
+
   async browseWebhooks() {
-    return this.store.sites.browse();
+    const webhookGroups = await this.browseWebhookGroups();
+    const webhookMap = {};
+    webhookGroups.forEach(group => {
+      group.webhooks.forEach(w => {
+        // Add webhook if it hasn't already been added.
+        if (!webhookMap[w.id]) {
+          webhookMap[w.id] = w;
+        }
+      });
+    });
+    return Object.values(webhookMap);
   }
 
-  async readWebhook(id) {
-    return this.store.sites.read(id);
+  async readWebhook(id, groupId, groupName) {
+    if (groupId) {
+      // Attempt to get the single group instead of all groups
+      // If webhook is not found, fallback to looking through all groups
+      const group = await this.readWebhookGroup(id);
+      const webhook = group.webhooks.find(w => w.id === id);
+      if (webhook) {
+        return webhook;
+      }
+    }
+    let groups = await this.browseWebhookGroups();
+    if (groupName) {
+      // Attempt to filter out groups based on group name
+      // Fallback to full list if there are no groups with the matching name
+      const filtered = groups.filter(g => g.name === groupName);
+      if (filtered.length) {
+        groups = filtered;
+      }
+    }
+    const webhookMap = {};
+    groups.forEach(group => {
+      group.webhooks.forEach(w => {
+        // Add webhook if it hasn't already been added.
+        if (!webhookMap[w.id]) {
+          webhookMap[w.id] = w;
+        }
+      });
+    });
+    return webhookMap[id];
   }
 
-  async addWebhook(data) {
+  async addWebhook(data, groupId) {
     // Supplement missing data with initial state until
     // partial site objects are supported
     const siteData = {
       ...siteState,
       ...data,
     };
-    return this.store.sites.add(siteData);
+    try {
+      const group = await this.readWebhookGroup(groupId);
+      const existingIdx = group.webhooks.findIndex(w => w.url === siteData.url);
+      if (existingIdx === -1) {
+        group.webhooks.push({
+          ...siteData,
+          id: uuidv4(),
+        });
+        return this.editWebhookGroup(groupId, group);
+      }
+      const oldWebhook = group.webhooks[existingIdx];
+      group.webhooks[existingIdx] = {
+        ...oldWebhook,
+        ...data,
+      };
+      return this.editWebhookGroup(groupId, group);
+    } catch (_) {
+      throw new Error('Invalid group id!');
+    }
   }
 
-  async editWebhook(id, data) {
-    // Supplement missing data with initial state until
-    // partial site objects are supported
-    const siteData = {
-      ...siteState,
-      ...data,
-    };
-    return this.store.sites.edit(id, siteData);
+  async editWebhook(id, data, groupId) {
+    try {
+      const group = await this.readWebhookGroup(groupId);
+      const existingIdx = group.webhooks.findIndex(w => w.id === id);
+      if (existingIdx === -1) {
+        // no existing webhook, add it instead
+        return this.addWebhook(data, groupId);
+      }
+      const oldWebhook = group.webhooks[existingIdx];
+      group.webhooks[existingIdx] = {
+        ...oldWebhook,
+        ...data,
+      };
+      return this.editWebhookGroup(groupId, group);
+    } catch (_) {
+      throw new Error('Invalid group id!');
+    }
   }
 
   async browseMonitors() {
