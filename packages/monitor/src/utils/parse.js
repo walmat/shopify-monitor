@@ -150,7 +150,7 @@ function matchVariant(products, variantId) {
  * @param {Object} keywords an object containing two arrays of strings (`pos` and `neg`)
  * @see filterAndLimit
  */
-function matchKeywords(products, keywords, fil, returnAll) {
+function matchKeywords(products, keywords, fil, returnAll = true) {
   if (!products) {
     return null;
   }

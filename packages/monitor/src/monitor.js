@@ -37,14 +37,12 @@ class Monitor {
       jar: request.jar(),
     });
 
-    this._products = [];
     this.stop = false;
     this._state = States.Start;
 
     this._context = {
       id,
       data,
-      products: this._products,
       proxy: proxy ? proxy.proxy : null,
       status: null,
       request: this._request,
@@ -172,7 +170,7 @@ class Monitor {
     }
     await delay(timeout);
     console.log('monitoring...');
-    return { status: `Monitoring...`, nextState: States.Parse };
+    return { status: `Monitoring`, nextState: States.Parse };
   }
 
   async _handleParsingErrors(errors) {
@@ -257,7 +255,6 @@ class Monitor {
       variants,
       0,
     );
-    this._products.push(product);
     // check for next state (means we hit an error when generating variants)
     if (nextState) {
       return { nextState, status };
@@ -431,7 +428,7 @@ class Monitor {
     return this._prevState;
   }
 
-  _handleEndState() {
+  async _handleEndState() {
     let status = 'stopped';
     switch (this._state) {
       case States.Abort:
@@ -446,13 +443,7 @@ class Monitor {
       default:
         break;
     }
-    return () => {
-      this._emitEvent({
-        status: this._context.status || `Monitor has ${status}`,
-        done: true,
-      });
-      return States.Stop;
-    };
+    return States.Stop;
   }
 
   async _handleState(state) {

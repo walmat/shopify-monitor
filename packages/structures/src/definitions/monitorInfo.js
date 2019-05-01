@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 
 import site from './site';
+import products from './products';
 import keywordInfo from './keywordInfo';
 
 // Monitor Info Definition
@@ -27,4 +28,8 @@ export default PropTypes.shape({
 
   // Delay (in ms) to wait when error occurs in monitor cycles
   errorDelay: PropTypes.number.isRequired,
+
+  // Array of products that are found for that monitor package
+  // TODO: find a way to sync this with the database when starting/stopping monitors
+  products: products.isRequired,
 });

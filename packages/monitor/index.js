@@ -1,5 +1,7 @@
 const monitor = require('./src');
 
+require('dotenv').config();
+
 const Manager = new monitor.Manager();
 
 const data = {
