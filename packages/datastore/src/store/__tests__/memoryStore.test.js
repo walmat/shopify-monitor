@@ -103,6 +103,10 @@ describe('MemoryStore', () => {
       expect(store.monitorInfoGroups).toEqual(expect.any(MemoryApi));
     });
 
+    test('for products', () => {
+      expect(store.products).toEqual(expect.any(MemoryApi));
+    });
+
     test('for proxies', () => {
       expect(store.proxies).toEqual(expect.any(MemoryApi));
     });

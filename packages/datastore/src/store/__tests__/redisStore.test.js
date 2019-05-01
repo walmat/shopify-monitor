@@ -114,6 +114,10 @@ describe('RedisStore', () => {
       expect(store.monitorInfoGroups).toEqual(expect.any(RedisApi));
     });
 
+    test('for products', () => {
+      expect(store.products).toEqual(expect.any(RedisApi));
+    });
+
     test('for proxies', () => {
       expect(store.proxies).toEqual(expect.any(RedisApi));
     });
