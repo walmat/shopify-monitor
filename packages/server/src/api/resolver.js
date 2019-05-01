@@ -1,4 +1,4 @@
-import { MemoryStore } from '@monitor/datastore';
+import { MemoryStore, RedisStore, Datasources } from '@monitor/datastore';
 import { initialStates, utils } from '@monitor/structures';
 
 const { monitorInfoState, proxyState, settingsState, siteState } = initialStates;
@@ -7,7 +7,14 @@ const { buildProxyInfo } = utils;
 class Resolver {
   constructor() {
     this._settingsId = null;
-    this.store = new MemoryStore();
+    if (process.env.MONITOR_DATASOURCE === Datasources.redis) {
+      this.store = new RedisStore({
+        host: process.env.MONITOR_REDIS_HOST,
+        port: process.env.MONITOR_REDIS_PORT,
+      });
+    } else {
+      this.store = new MemoryStore();
+    }
   }
 
   async browseProxies() {
@@ -53,12 +60,12 @@ class Resolver {
     // need to deduce the settings id
     if (this._settingsId) {
       // get the settings and delete the id so graphql doesn't complain
-      const settings = this.store.settings.read(this._settingsId);
+      const settings = await this.store.settings.read(this._settingsId);
       delete settings.id;
       return settings;
     }
 
-    const settingsList = this.store.settings.browse();
+    const settingsList = await this.store.settings.browse();
     if (!settingsList.length) {
       // No settings stored, return default settings
       return { ...settingsState };

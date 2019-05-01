@@ -3,6 +3,9 @@ import cors from 'cors';
 
 import attachV1DataRoute from './api/v1/data';
 import Resolver from './api/resolver';
+import configEnv from './env';
+
+configEnv();
 
 const rootResolver = new Resolver();
 const app = express();
