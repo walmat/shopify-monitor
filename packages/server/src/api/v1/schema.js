@@ -22,10 +22,6 @@ const {
   },
 } = structures;
 
-const {
-  initialStates: { monitorInfoState, proxyState, settingsState, siteState },
-} = structures;
-
 const query = new GraphQLObjectType({
   name: 'QueryAPI',
   description: 'Query API for Shopify Monitor',
@@ -33,7 +29,7 @@ const query = new GraphQLObjectType({
     proxies: {
       type: GraphQLList(GraphQLNonNull(ProxyType)),
       description: 'Retrieve all proxies',
-      resolve: () => [], // TODO: Implement
+      resolve: root => root.browseProxies(),
     },
     proxy: {
       type: ProxyType,
@@ -44,17 +40,17 @@ const query = new GraphQLObjectType({
           description: 'id of the proxy to retrieve',
         },
       },
-      resolve: () => ({ ...proxyState }), // TODO: Impelement
+      resolve: (root, { id }) => root.readProxy(id),
     },
     settings: {
       type: GraphQLNonNull(SettingsType),
       description: 'Retrieve settings',
-      resolve: () => ({ ...settingsState }), // TODO: Implement
+      resolve: root => root.getSettings(),
     },
     webhooks: {
       type: GraphQLList(GraphQLNonNull(SiteType)),
       description: 'Retrieve stored webhooks',
-      resolve: () => [], // TODO: Implement
+      resolve: root => root.browseWebhooks(),
     },
     webhook: {
       type: GraphQLNonNull(SiteType),
@@ -65,12 +61,12 @@ const query = new GraphQLObjectType({
           description: 'id of webhook to retrieve',
         },
       },
-      resolve: () => ({ ...siteState }), // TODO: Implement
+      resolve: (root, { id }) => root.readWebhook(id),
     },
     monitors: {
       type: GraphQLList(GraphQLNonNull(MonitorInfoType)),
       description: 'Retrieve all Monitors',
-      resolve: () => [],
+      resolve: root => root.browseMonitors(),
     },
     monitor: {
       type: GraphQLNonNull(MonitorInfoType),
@@ -81,7 +77,7 @@ const query = new GraphQLObjectType({
           description: 'id of monitor to retrieve',
         },
       },
-      resolve: () => ({ ...monitorInfoState }), // TODO: Implement
+      resolve: (root, { id }) => root.readMonitor(id),
     },
   }),
 });
@@ -99,7 +95,7 @@ const mutation = new GraphQLObjectType({
           description: 'String to parse for proxy data',
         },
       },
-      resolve: () => ({ ...proxyState }), // TODO: Implement
+      resolve: (root, { data }) => root.addProxyFromString(data),
     },
     addProxyFromData: {
       type: ProxyType,
@@ -110,7 +106,7 @@ const mutation = new GraphQLObjectType({
           description: 'Structured data for proxy',
         },
       },
-      resolve: () => ({ ...proxyState }), // TODO: Implement
+      resolve: (root, { data }) => root.addProxyFromData(data),
     },
     editProxyFromString: {
       type: ProxyType,
@@ -125,7 +121,7 @@ const mutation = new GraphQLObjectType({
           description: 'String to parse for proxy data',
         },
       },
-      resolve: () => ({ ...proxyState }), // TODO: Implement
+      resolve: (root, { id, data }) => root.editProxyFromString(id, data),
     },
     editProxyFromData: {
       type: ProxyType,
@@ -140,7 +136,7 @@ const mutation = new GraphQLObjectType({
           description: 'Structured data for proxy',
         },
       },
-      resolve: () => ({ ...proxyState }), // TODO: Implement
+      resolve: (root, { id, data }) => root.editProxyFromData(id, data),
     },
     updateSettings: {
       type: SettingsType,
@@ -151,7 +147,7 @@ const mutation = new GraphQLObjectType({
           description: 'Updated settings to save',
         },
       },
-      resolve: () => ({ ...settingsState }), // TODO: Implement
+      resolve: (root, { data }) => root.updateSettings(data),
     },
     addWebhook: {
       type: SiteType,
@@ -162,7 +158,7 @@ const mutation = new GraphQLObjectType({
           description: 'webhook info to add',
         },
       },
-      resolve: () => ({ ...siteState }), // TODO: Implement
+      resolve: (root, { data }) => root.addWebhook(data),
     },
     editWebhook: {
       type: SiteType,
@@ -177,7 +173,7 @@ const mutation = new GraphQLObjectType({
           description: 'updated webhook info',
         },
       },
-      resolve: () => ({ ...siteState }), // TODO: Implement
+      resolve: (root, { data }) => root.editWebhook(data),
     },
     addMonitor: {
       type: MonitorInfoType,
@@ -188,7 +184,7 @@ const mutation = new GraphQLObjectType({
           description: 'Monitor Info to add',
         },
       },
-      resolve: () => ({ ...monitorInfoState }), // TODO: Implement
+      resolve: (root, { data }) => root.addMonitor(data),
     },
     editMonitor: {
       type: MonitorInfoType,
@@ -203,7 +199,7 @@ const mutation = new GraphQLObjectType({
           description: 'Updated monitor info',
         },
       },
-      resolve: () => ({ ...monitorInfoState }), // TODO: Implement
+      resolve: (root, { id, data }) => root.editMonitor(id, data),
     },
   }),
 });
