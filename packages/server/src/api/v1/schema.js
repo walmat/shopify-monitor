@@ -12,6 +12,8 @@ const {
   graphql: {
     MonitorInfoType,
     MonitorInfoInputType,
+    ProductType,
+    ProductInputType,
     ProxyType,
     ProxyStringInputType,
     ProxyDataInputType,
@@ -26,6 +28,22 @@ const query = new GraphQLObjectType({
   name: 'QueryAPI',
   description: 'Query API for Shopify Monitor',
   fields: () => ({
+    products: {
+      type: GraphQLList(GraphQLNonNull(ProductType)),
+      description: 'Retrieve all matched products',
+      resolve: root => root.browseProducts(),
+    },
+    product: {
+      type: ProductType,
+      description: 'Retrieve matched product for a specific id',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of product to retrieve',
+        },
+      },
+      resolve: (root, { id }) => root.readProduct(id),
+    },
     proxies: {
       type: GraphQLList(GraphQLNonNull(ProxyType)),
       description: 'Retrieve all proxies',
@@ -86,6 +104,32 @@ const mutation = new GraphQLObjectType({
   name: 'MutationAPI',
   description: 'Mutation API for Shopify Monitor',
   fields: () => ({
+    addProduct: {
+      type: ProductType,
+      description: 'Add a new product',
+      args: {
+        data: {
+          type: GraphQLNonNull(ProductInputType),
+          description: 'Product data to store',
+        },
+      },
+      resolve: (root, { data }) => root.addProduct(data),
+    },
+    editProduct: {
+      type: ProductType,
+      description: 'Edit an existing product with new data',
+      args: {
+        id: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'id of product to edit',
+        },
+        data: {
+          type: GraphQLNonNull(ProductInputType),
+          description: 'Product data to store',
+        },
+      },
+      resolve: (root, { id, data }) => root.editProduct(id, data),
+    },
     addProxyFromString: {
       type: ProxyType,
       description: 'Add a new proxy from a raw string input',

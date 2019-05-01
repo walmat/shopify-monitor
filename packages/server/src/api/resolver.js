@@ -1,7 +1,7 @@
 import { MemoryStore, RedisStore, Datasources } from '@monitor/datastore';
 import { initialStates, utils } from '@monitor/structures';
 
-const { monitorInfoState, proxyState, settingsState, siteState } = initialStates;
+const { monitorInfoState, productState, proxyState, settingsState, siteState } = initialStates;
 const { buildProxyInfo } = utils;
 
 class Resolver {
@@ -15,6 +15,34 @@ class Resolver {
     } else {
       this.store = new MemoryStore();
     }
+  }
+
+  async browseProducts() {
+    return this.store.products.browse();
+  }
+
+  async readProduct(id) {
+    return this.store.products.read(id);
+  }
+
+  async addProduct(data) {
+    // Supplement missing data with initial state until
+    // partial product objects are supported
+    const productData = {
+      ...productState,
+      ...data,
+    };
+    return this.store.products.add(productData);
+  }
+
+  async editProduct(id, data) {
+    // Supplement missing data with initial state until
+    // partial product objects are supported
+    const productData = {
+      ...productState,
+      ...data,
+    };
+    return this.store.products.edit(id, productData);
   }
 
   async browseProxies() {
