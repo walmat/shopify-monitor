@@ -27,6 +27,12 @@ describe('Abstract Store', () => {
       }).toThrow(new Error('This needs to be overwritten in subclass!'));
     });
 
+    it('should throw error for get products', () => {
+      expect(() => {
+        store.products;
+      }).toThrow(new Error('This needs to be overwritten in subclass!'));
+    });
+
     it('should throw error for get proxies', () => {
       expect(() => {
         store.proxies;
@@ -39,9 +45,9 @@ describe('Abstract Store', () => {
       }).toThrow(new Error('This needs to be overwritten in subclass!'));
     });
 
-    it('should throw error for get sites', () => {
+    it('should throw error for get webhooks', () => {
       expect(() => {
-        store.sites;
+        store.webhooks;
       }).toThrow(new Error('This needs to be overwritten in subclass!'));
     });
   });

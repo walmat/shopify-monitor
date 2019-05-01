@@ -42,42 +42,63 @@ describe('RedisStore', () => {
     }
 
     test('for monitorInfoGroups', () => {
-      RedisApi.mockImplementationOnce((...params) => new ThrowApi(...params));
+      RedisApi.mockImplementation((...params) => {
+        if (params[0] === 'monitorInfos') {
+          return new ThrowApi(...params);
+        }
+        return new RealRedisApi(...params);
+      });
       expect(() => {
         new RedisStore();
       }).toThrow('test throw');
-      expect(RedisApi).toHaveBeenCalledTimes(1);
+    });
+
+    test('for products', () => {
+      RedisApi.mockImplementation((...params) => {
+        if (params[0] === 'products') {
+          return new ThrowApi(...params);
+        }
+        return new RealRedisApi(...params);
+      });
+      expect(() => {
+        new RedisStore();
+      }).toThrow('test throw');
     });
 
     test('for proxies', () => {
-      RedisApi.mockImplementationOnce(
-        (...params) => new RealRedisApi(...params),
-      ).mockImplementationOnce((...params) => new ThrowApi(...params));
+      RedisApi.mockImplementation((...params) => {
+        if (params[0] === 'proxies') {
+          return new ThrowApi(...params);
+        }
+        return new RealRedisApi(...params);
+      });
       expect(() => {
         new RedisStore();
       }).toThrow('test throw');
-      expect(RedisApi).toHaveBeenCalledTimes(2);
     });
 
     test('for settings', () => {
-      RedisApi.mockImplementationOnce((...params) => new RealRedisApi(...params))
-        .mockImplementationOnce((...params) => new RealRedisApi(...params))
-        .mockImplementationOnce((...params) => new ThrowApi(...params));
+      RedisApi.mockImplementation((...params) => {
+        if (params[0] === 'settings') {
+          return new ThrowApi(...params);
+        }
+        return new RealRedisApi(...params);
+      });
       expect(() => {
         new RedisStore();
       }).toThrow('test throw');
-      expect(RedisApi).toHaveBeenCalledTimes(3);
     });
 
-    test('for sites', () => {
-      RedisApi.mockImplementationOnce((...params) => new RealRedisApi(...params))
-        .mockImplementationOnce((...params) => new RealRedisApi(...params))
-        .mockImplementationOnce((...params) => new RealRedisApi(...params))
-        .mockImplementationOnce((...params) => new ThrowApi(...params));
+    test('for webhooks', () => {
+      RedisApi.mockImplementation((...params) => {
+        if (params[0] === 'webhooks') {
+          return new ThrowApi(...params);
+        }
+        return new RealRedisApi(...params);
+      });
       expect(() => {
         new RedisStore();
       }).toThrow('test throw');
-      expect(RedisApi).toHaveBeenCalledTimes(4);
     });
   });
 
@@ -93,6 +114,10 @@ describe('RedisStore', () => {
       expect(store.monitorInfoGroups).toEqual(expect.any(RedisApi));
     });
 
+    test('for products', () => {
+      expect(store.products).toEqual(expect.any(RedisApi));
+    });
+
     test('for proxies', () => {
       expect(store.proxies).toEqual(expect.any(RedisApi));
     });
@@ -101,8 +126,8 @@ describe('RedisStore', () => {
       expect(store.settings).toEqual(expect.any(RedisApi));
     });
 
-    test('for sites', () => {
-      expect(store.sites).toEqual(expect.any(RedisApi));
+    test('for webhooks', () => {
+      expect(store.webhooks).toEqual(expect.any(RedisApi));
     });
   });
 });
