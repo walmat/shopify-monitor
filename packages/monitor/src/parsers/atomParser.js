@@ -10,14 +10,17 @@ class AtomParser extends Parser {
    * @param {Proxy} the proxy to use when making requests
    * @param {Logger} (optional) A logger to log messages to
    */
-  constructor(request, data, proxy) {
-    super(request, data, proxy, 'AtomParser');
+  constructor(request, data, proxy, type) {
+    super(request, data, proxy, type, 'AtomParser');
   }
 
   async run() {
     if (this._type !== ParseType.Keywords) {
       throw new Error('Atom parsing is only supported for keyword searching');
     }
+
+    const { url } = this._data.site;
+
     let responseJson;
     try {
       const response = await this._request({
@@ -40,6 +43,11 @@ class AtomParser extends Parser {
     }
 
     const responseItems = responseJson.feed.entry;
+    if (!responseItems || !responseItems.length) {
+      const rethrow = new Error('No Products Found');
+      rethrow.status = 404;
+      throw rethrow;
+    }
     const products = responseItems.map(item => ({
       id_raw: item.id[0],
       id: item.id[0].substring(item.id[0].lastIndexOf('/') + 1),
@@ -48,27 +56,28 @@ class AtomParser extends Parser {
       title: item.title[0],
       handle: '-',
     }));
-    const matchedProduct = super.match(products);
+    const matchedProducts = super.match(products);
 
-    if (!matchedProduct) {
+    if (!matchedProducts) {
       const rethrow = new Error('unable to match the product');
       rethrow.status = 500; // Use a bad status code
       throw rethrow;
     }
-    let fullProductInfo = null;
+    const fullProductsInfo = [];
     try {
-      fullProductInfo = await Parser.getFullProductInfo(
-        matchedProduct.url,
-        this._request,
-        this._logger,
-      );
-      return {
-        ...matchedProduct,
-        ...fullProductInfo,
-        url: matchedProduct.url, // Use known good product url
-      };
+      await matchedProducts.forEach(async product => {
+        const info = await Parser.getFullProductInfo(product.url, this._request);
+
+        if (!info) {
+          // TODO: should we throw here?
+          throw new Error('Unable to get full product info!');
+        }
+        fullProductsInfo.push(info);
+      });
+
+      return fullProductsInfo;
     } catch (errors) {
-      const rethrow = new Error('unable to get full product info');
+      const rethrow = new Error('Failed getting full product info!');
       rethrow.status = 500; // Use a bad status code
       throw rethrow;
     }

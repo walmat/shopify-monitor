@@ -3,10 +3,8 @@ const hash = require('object-hash');
 const shortid = require('shortid');
 
 class ProxyManager {
-  constructor(context) {
-    this._context = context;
+  constructor() {
     this._proxies = new Map();
-
     this.timeout = 120000; // ms
     this.retry = 100; // ms
   }
@@ -46,6 +44,10 @@ class ProxyManager {
     });
   }
 
+  /**
+   * Deregisters a proxy from a monitor
+   * @param {String} proxy - proxy {ip:port} (optional user:pass) format
+   */
   deregister(proxy) {
     const proxyHash = hash(proxy);
     let stored = null;
@@ -98,6 +100,9 @@ class ProxyManager {
       setTimeout(() => {
         delete p.ban[site];
       }, this.timeout);
+    }
+    if (banFlag === 2) {
+      this._proxies.delete(id);
     }
   }
 

@@ -229,9 +229,9 @@ class Monitor {
   _parseAll() {
     // Create the parsers and start the async run methods
     const parsers = [
-      new AtomParser(this._context.request, this._context.data, this._context.proxy),
-      new JsonParser(this._context.request, this._context.data, this._context.proxy),
-      new XmlParser(this._context.request, this._context.data, this._context.proxy),
+      new AtomParser(this.request, this.data, this.proxy, this._parseType),
+      new JsonParser(this.request, this.data, this.proxy, this._parseType),
+      new XmlParser(this.request, this.data, this.proxy, this._parseType),
     ].map(p => p.run());
     // Return the winner of the race
     return rfrl(parsers, 'parseAll');
@@ -245,24 +245,16 @@ class Monitor {
     } catch (errors) {
       return this._handleParsingErrors(errors);
     }
-    const { site } = this._context.data;
-    const { variants, nextState, status } = Monitor._generateVariants(parsed);
-    const product = new Product(
-      site,
-      `${site.url}/products/${parsed.handle}`,
-      parsed.title,
-      null,
-      variants,
-      0,
-    );
-    // check for next state (means we hit an error when generating variants)
-    if (nextState) {
-      return { nextState, status };
-    }
-    return {
-      status: `Found product: ${this._context.task.product.name}`,
-      nextState: States.Parse,
-    };
+
+    console.log(products);
+
+    const { variants, nextState } = Monitor._generateVariants(products);
+    // TODO: Compare all products data with current exising record in DB
+    /**
+     * NEXT STATE
+     *  -> If change, continue to send hooks && update db
+     *  -> If no change, loop back to parse again
+     */
   }
 
   async _monitorUrl() {
@@ -467,11 +459,8 @@ class Monitor {
 
   async run() {
     let nextState = this._state;
-    if (this._context.abort) {
-      nextState = States.Abort;
-    }
 
-    console.log('handling state: %s', this._state);
+    console.log('[DEBUG]: Handling state: %s', this._state);
 
     try {
       nextState = await this._handleState(this._state);
@@ -479,8 +468,10 @@ class Monitor {
       nextState = States.Error;
     }
 
+    console.log('[DEBUG]: Transitioning to state: %s', nextState);
+
     if (this._state !== nextState) {
-      this._prevState = this._state;
+      this._prevState = this.state;
       this._state = nextState;
     }
 

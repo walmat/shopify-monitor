@@ -7,8 +7,8 @@ const { ErrorCodes } = require('../utils/constants').Utils;
  * Base Special Parser for all DSM Sites
  */
 class DsmParser extends SpecialParser {
-  constructor(request, data, proxy, name = 'DsmParser') {
-    super(request, data, proxy, name);
+  constructor(request, data, proxy, type, name = 'DsmParser') {
+    super(request, data, proxy, type, name);
   }
 
   // eslint-disable-next-line class-methods-use-this

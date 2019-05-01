@@ -13,9 +13,9 @@ const data = {
     url: 'https://kith.com',
   },
   keywords: {
-    positive: ['test'],
+    positive: ['yeezy', 'boucle'],
     negative: [],
-    value: '+test',
+    value: '+yeezy,+boucle',
   },
   status: '',
   monitorDelay: 1500,

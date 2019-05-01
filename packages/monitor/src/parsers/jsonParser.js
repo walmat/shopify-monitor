@@ -9,8 +9,8 @@ class JsonParser extends Parser {
    * @param {Object} data the data we want to parse and match
    * @param {Proxy} the proxy to use when making requests
    */
-  constructor(request, data, proxy) {
-    super(request, data, proxy, 'JsonParser');
+  constructor(request, data, proxy, type) {
+    super(request, data, proxy, type, 'JsonParser');
   }
 
   async run() {
@@ -35,15 +35,12 @@ class JsonParser extends Parser {
       rethrow.status = error.statusCode || 404; // Use the status code, or a 404 if no code is given
       throw rethrow;
     }
-    const matchedProduct = super.match(products);
+    const matchedProducts = super.match(products);
 
-    if (!matchedProduct) {
-      throw new Error('unable to match the product');
+    if (!matchedProducts) {
+      throw new Error('unable to match products');
     }
-    return {
-      ...matchedProduct,
-      url: `${url}/products/${matchedProduct.handle}`,
-    };
+    return matchedProducts;
   }
 }
 

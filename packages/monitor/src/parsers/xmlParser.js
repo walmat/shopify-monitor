@@ -9,14 +9,16 @@ class XmlParser extends Parser {
    * @param {Object} data the data we want to parse and match
    * @param {Proxy} the proxy to use when making requests
    */
-  constructor(request, data, proxy) {
-    super(request, data, proxy, 'XmlParser');
+  constructor(request, data, proxy, type) {
+    super(request, data, proxy, type, 'XmlParser');
   }
 
   async run() {
     if (this._type !== ParseType.Keywords) {
       throw new Error('xml parsing is only supported for keyword searching');
     }
+
+    const { url } = this._data.site;
     let responseJson;
     try {
       const response = await this._request({
@@ -51,12 +53,16 @@ class XmlParser extends Parser {
     }
     let fullProductInfo = null;
     try {
-      fullProductInfo = await Parser.getFullProductInfo(matchedProduct.url, this._request);
-      return {
-        ...matchedProduct,
-        ...fullProductInfo,
-        url: matchedProduct.url, // Use known good product url
-      };
+      await matchedProducts.forEach(async product => {
+        const info = await Parser.getFullProductInfo(product.url, this._request);
+
+        if (!info) {
+          // TODO: should we throw here?
+          throw new Error('Unable to get full product info!');
+        }
+        fullProductsInfo.push(info);
+      });
+      return fullProductsInfo;
     } catch (errors) {
       throw new Error('unable to get full product info');
     }

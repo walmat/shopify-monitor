@@ -119,13 +119,11 @@ class Manager {
    * @param {Object} data - mapped from `monitorInfo` in `packages/structures/src/definitions/monitorInfo.js`
    */
   async start(data) {
-    console.log('starting...');
     const alreadyStarted = Object.values(this._monitors).find(s => s.id === data.id);
     if (alreadyStarted) {
       return;
     }
     const { id, openProxy } = await this.setup(data.site.url);
-    console.log('id: %s, proxy: %j', id, openProxy);
 
     this._start([id, data, openProxy]).then(() => {
       this.cleanup(id);
@@ -301,6 +299,7 @@ class Manager {
     try {
       await monitor.start();
     } catch (error) {
+      console.log(error);
       // fail silently...
     }
 

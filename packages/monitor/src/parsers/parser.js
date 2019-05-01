@@ -1,6 +1,6 @@
 /* eslint-disable class-methods-use-this */
-const { ParseType, getParseType, matchKeywords } = require('../utils/parse');
-const { ErrorCodes, format, userAgent, rfrl } = require('../utils/constants').Utils;
+const { ParseType, matchKeywords } = require('../utils/parse');
+const { format, userAgent, rfrl } = require('../utils/constants').Utils;
 
 class Parser {
   /**
@@ -75,12 +75,12 @@ class Parser {
   /**
    * Construct a new parser
    */
-  constructor(request, data, proxy, name) {
+  constructor(request, data, proxy, type, name) {
     this._name = name || 'Parser';
     this._proxy = proxy;
     this._request = request;
     this._data = data;
-    this._type = getParseType(data.product);
+    this._type = type;
   }
 
   /**
@@ -104,11 +104,10 @@ class Parser {
           pos: this._data.product.positive,
           neg: this._data.product.negative,
         };
-        const product = matchKeywords(products, keywords);
-        if (!product) {
-          // TODO: Maybe replace with a custom error object?
+        const matchedProducts = matchKeywords(products, keywords);
+        if (!matchedProducts) {
           const error = new Error('ProductNotFound');
-          error.status = ErrorCodes.ProductNotFound;
+          error.status = 404;
           throw error;
         }
         return product;
