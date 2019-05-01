@@ -1,24 +1,30 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
+import express from 'express';
+import cors from 'cors';
 
+import attachV1DataRoute from './api/v1/data';
+import Resolver from './api/resolver';
+import configEnv from './env';
+
+configEnv();
+
+const rootResolver = new Resolver();
 const app = express();
 app.use(cors());
-app.use(express.static(path.join(__dirname, '/client/build')));
+// TODO: Add back in when we have the client setup
+// app.use(express.static(path.join(__dirname, '/client/build')));
 
-app.get('/api/test', (req, res) => {
-  res.json({
-    message: 'hello world',
-  });
-});
+// Attach the v1 graphql data route
+attachV1DataRoute(app, '/api/v1/data', rootResolver);
 
 // The "catch all" handler: for any request that doesn't
 // match one above, send back React's index.html file.
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '/client/build/index.html'));
-});
+// TODO: Add back in when we have the client setup
+// app.get('*', (req, res) => {
+//   res.sendFile(path.join(__dirname, '/client/build/index.html'));
+// });
 
 const port = process.env.PORT || 5000;
 app.listen(port);
 
-console.log(`server listening on ${port}`); // eslint-disable-line no-console
+// eslint-disable-next-line no-console
+console.log(`server listening on ${port}`);

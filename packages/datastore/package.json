@@ -6,7 +6,7 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "build": "babel --root-mode upward --no-comments -d dist src",
+    "build": "babel --root-mode upward --no-comments -d dist src/",
     "coverage": "jest --coverage",
     "test": "jest",
     "test:watch": "jest --watch",
