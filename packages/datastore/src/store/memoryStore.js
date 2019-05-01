@@ -7,13 +7,18 @@ class MemoryStore extends Store {
   constructor() {
     super(Datasources.memory);
     this._monitorInfoApi = new MemoryApi('monitorInfos');
+    this._productsApi = new MemoryApi('products');
     this._proxiesApi = new MemoryApi('proxies');
     this._settingsApi = new MemoryApi('settings');
-    this._sitesApi = new MemoryApi('sites');
+    this._webhooksApi = new MemoryApi('webhooks');
   }
 
   get monitorInfoGroups() {
     return this._monitorInfoApi;
+  }
+
+  get products() {
+    return this._productsApi;
   }
 
   get proxies() {
@@ -24,8 +29,8 @@ class MemoryStore extends Store {
     return this._settingsApi;
   }
 
-  get sites() {
-    return this._sitesApi;
+  get webhooks() {
+    return this._webhooksApi;
   }
 }
 

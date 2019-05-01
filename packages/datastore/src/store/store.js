@@ -1,4 +1,4 @@
-/* eslint class-methods-use-this: ["error", { "exceptMethods": ["monitorInfoGroups", "proxies", "settings", "sites"] }] */
+/* eslint class-methods-use-this: ["error", { "exceptMethods": ["monitorInfoGroups", "products", "proxies", "settings", "sites", "webhooks"] }] */
 
 class Store {
   constructor(source) {
@@ -23,6 +23,13 @@ class Store {
   }
 
   /**
+   * Api instance to manage products
+   */
+  get products() {
+    throw new Error('This needs to be overwritten in subclass!');
+  }
+
+  /**
    * Api instance to manage proxies
    */
   get proxies() {
@@ -37,9 +44,9 @@ class Store {
   }
 
   /**
-   * Api instance to manage sites
+   * Api instance to manage webhooks
    */
-  get sites() {
+  get webhooks() {
     throw new Error('This needs to be overwritten in subclass!');
   }
 }

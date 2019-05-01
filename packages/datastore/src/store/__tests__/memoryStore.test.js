@@ -31,42 +31,63 @@ describe('MemoryStore', () => {
     }
 
     test('for monitorInfoGroups', () => {
-      MemoryApi.mockImplementationOnce((...params) => new ThrowApi(...params));
+      MemoryApi.mockImplementation((...params) => {
+        if (params[0] === 'monitorInfos') {
+          return new ThrowApi(...params);
+        }
+        return new RealMemoryApi(...params);
+      });
       expect(() => {
         new MemoryStore();
       }).toThrow('test throw');
-      expect(MemoryApi).toHaveBeenCalledTimes(1);
+    });
+
+    test('for products', () => {
+      MemoryApi.mockImplementation((...params) => {
+        if (params[0] === 'products') {
+          return new ThrowApi(...params);
+        }
+        return new RealMemoryApi(...params);
+      });
+      expect(() => {
+        new MemoryStore();
+      }).toThrow('test throw');
     });
 
     test('for proxies', () => {
-      MemoryApi.mockImplementationOnce(
-        (...params) => new RealMemoryApi(...params),
-      ).mockImplementationOnce((...params) => new ThrowApi(...params));
+      MemoryApi.mockImplementation((...params) => {
+        if (params[0] === 'proxies') {
+          return new ThrowApi(...params);
+        }
+        return new RealMemoryApi(...params);
+      });
       expect(() => {
         new MemoryStore();
       }).toThrow('test throw');
-      expect(MemoryApi).toHaveBeenCalledTimes(2);
     });
 
     test('for settings', () => {
-      MemoryApi.mockImplementationOnce((...params) => new RealMemoryApi(...params))
-        .mockImplementationOnce((...params) => new RealMemoryApi(...params))
-        .mockImplementationOnce((...params) => new ThrowApi(...params));
+      MemoryApi.mockImplementation((...params) => {
+        if (params[0] === 'settings') {
+          return new ThrowApi(...params);
+        }
+        return new RealMemoryApi(...params);
+      });
       expect(() => {
         new MemoryStore();
       }).toThrow('test throw');
-      expect(MemoryApi).toHaveBeenCalledTimes(3);
     });
 
-    test('for sites', () => {
-      MemoryApi.mockImplementationOnce((...params) => new RealMemoryApi(...params))
-        .mockImplementationOnce((...params) => new RealMemoryApi(...params))
-        .mockImplementationOnce((...params) => new RealMemoryApi(...params))
-        .mockImplementationOnce((...params) => new ThrowApi(...params));
+    test('for webhooks', () => {
+      MemoryApi.mockImplementation((...params) => {
+        if (params[0] === 'webhooks') {
+          return new ThrowApi(...params);
+        }
+        return new RealMemoryApi(...params);
+      });
       expect(() => {
         new MemoryStore();
       }).toThrow('test throw');
-      expect(MemoryApi).toHaveBeenCalledTimes(4);
     });
   });
 
@@ -90,8 +111,8 @@ describe('MemoryStore', () => {
       expect(store.settings).toEqual(expect.any(MemoryApi));
     });
 
-    test('for sites', () => {
-      expect(store.sites).toEqual(expect.any(MemoryApi));
+    test('for webhooks', () => {
+      expect(store.webhooks).toEqual(expect.any(MemoryApi));
     });
   });
 });

@@ -10,13 +10,18 @@ class RedisStore extends Store {
     super(Datasources.redis);
     this._client = createClient(redisClientOptions);
     this._monitorInfoApi = new RedisApi('monitorInfos', this._client);
+    this._productsApi = new RedisApi('products', this._client);
     this._proxiesApi = new RedisApi('proxies', this._client);
     this._settingsApi = new RedisApi('settings', this._client);
-    this._sitesApi = new RedisApi('sites', this._client);
+    this._webhooksApi = new RedisApi('webhooks', this._client);
   }
 
   get monitorInfoGroups() {
     return this._monitorInfoApi;
+  }
+
+  get products() {
+    return this._productsApi;
   }
 
   get proxies() {
@@ -27,8 +32,8 @@ class RedisStore extends Store {
     return this._settingsApi;
   }
 
-  get sites() {
-    return this._sitesApi;
+  get webhooks() {
+    return this._webhooksApi;
   }
 }
 
