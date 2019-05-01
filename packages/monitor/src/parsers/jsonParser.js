@@ -9,13 +9,13 @@ class JsonParser extends Parser {
    * @param {Object} data the data we want to parse and match
    * @param {Proxy} the proxy to use when making requests
    */
-  constructor(request, data, proxy, type) {
-    super(request, data, proxy, type, 'JsonParser');
+  constructor(request, site, data, proxy) {
+    super(request, site, data, proxy, 'JsonParser');
   }
 
   async run() {
-    const { url } = this._data.site;
     let products;
+    const { url } = this._site;
     try {
       const response = await this._request({
         method: 'GET',

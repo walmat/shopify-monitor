@@ -35,16 +35,12 @@ const format = input => {
   return null;
 };
 
-const headers = ({ url, apiKey }) => ({
+const headers = ({ url }) => ({
   Accept: 'application/json',
   'Content-Type': 'application/json',
   Connection: 'keep-alive',
-  'X-Shopify-Checkout-Version': '2019-10-06',
-  'X-Shopify-Access-Token': `${apiKey}`,
-  'x-barba': 'yes',
   'User-Agent': userAgent,
   host: `${url.split('/')[2]}`,
-  authorization: `Basic ${Buffer.from(`${apiKey}::`).toString('base64')}`,
 });
 
 const ManagerEvents = {
@@ -52,16 +48,14 @@ const ManagerEvents = {
   SendProxy: 'SEND_PROXY',
   ChangeDelay: 'CHANGE_DELAY',
   ChangeWebhook: 'CHANGE_WEBHOOK',
+  UpdateKeywords: 'UPDATE_KEYWORDS',
 };
 
 const MonitorStates = {
   Start: 'START',
   Parse: 'PARSE',
-  Stock: 'STOCK',
-  Notify: 'NOTIFY',
+  Compare: 'COMPARE',
   SwapProxies: 'SWAP_PROXIES',
-  Error: 'ERROR',
-  Abort: 'ABORT',
   Stop: 'STOP',
 };
 
@@ -72,20 +66,6 @@ const MonitorEvents = {
   ReceiveProxy: 'RECEIVE_PROXY',
 };
 
-const Delays = {
-  Error: 'errorDelay',
-  Monitor: 'monitorDelay',
-};
-
-const Hooks = {
-  Discord: 'DISCORD',
-  Slack: 'SLACK',
-};
-
-const ErrorCodes = {
-  VariantsNotAvailable: 'VARIANTS_NOT_AVAILABLE',
-};
-
 module.exports = {
   Manager: {
     Events: ManagerEvents,
@@ -93,11 +73,8 @@ module.exports = {
   Monitor: {
     States: MonitorStates,
     Events: MonitorEvents,
-    Delays,
-    Hooks,
   },
   Utils: {
-    ErrorCodes,
     userAgent,
     headers,
     delay,

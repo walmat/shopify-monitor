@@ -10,8 +10,8 @@ class AtomParser extends Parser {
    * @param {Proxy} the proxy to use when making requests
    * @param {Logger} (optional) A logger to log messages to
    */
-  constructor(request, data, proxy, type) {
-    super(request, data, proxy, type, 'AtomParser');
+  constructor(request, site, data, proxy) {
+    super(request, site, data, proxy, 'AtomParser');
   }
 
   async run() {
@@ -19,7 +19,7 @@ class AtomParser extends Parser {
       throw new Error('Atom parsing is only supported for keyword searching');
     }
 
-    const { url } = this._data.site;
+    const { url } = this._site;
 
     let responseJson;
     try {

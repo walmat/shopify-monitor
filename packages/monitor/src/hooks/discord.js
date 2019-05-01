@@ -1,4 +1,5 @@
 const { RichEmbed, WebhookClient } = require('discord.js');
+const QuickTasks = require('./_assets/quick_tasks.json');
 
 class Discord {
   constructor(hook) {
@@ -22,6 +23,17 @@ class Discord {
         }
         return `${size}\n`;
       });
+      let quickTasks = ''; // has to be a string in order to keep on same line
+      Object.entries(QuickTasks).forEach(([key, value]) => {
+        if (key.indexOf('Eve') > -1) {
+          quickTasks += `\t[${key}](${value}${productUrl})\t`;
+        } else if (key.indexOf('TKS') > -1) {
+          quickTasks += `\t[${key}](${value}${productUrl}&autostart=true&isatclink=false)\t/`;
+        } else {
+          quickTasks += `\t[${key}](${value}${productUrl})\t/`;
+        }
+      });
+
       const embed = new RichEmbed()
         .setAuthor(storeName, null, storeUrl)
         .setColor(16167182)
@@ -30,14 +42,11 @@ class Discord {
         .setThumbnail(image)
         .addField('Type', type, true)
         .addField('Price', price, true)
-        .addField('Size(s)', sizes.forEach(s => s), false)
-        .addField('Quick Tasks', 'Coming soon...')
-        .addField('Full Size Run', 'Coming soon...')
+        .addField('Size(s)', sizes, false)
+        .addField('Quick Tasks', quickTasks.trim(), true)
+        .addField('Full Size Run', 'Coming soon!')
         .setTimestamp()
-        .setFooter(
-          'Shopify Monitor | [@FlexEngines](https://twitter.com/flexengines)',
-          'https://i.imgur.com/KelstZo.png',
-        );
+        .setFooter('Shopify Monitor | @nebulabots', 'https://i.imgur.com/KelstZo.png');
 
       return this.hook.send(embed);
     }

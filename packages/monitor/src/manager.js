@@ -1,6 +1,5 @@
 const EventEmitter = require('eventemitter3');
 const shortid = require('shortid');
-const { union } = require('underscore');
 
 const Monitor = require('./monitor');
 const ProxyManager = require('./proxy');
@@ -13,24 +12,6 @@ class Manager {
     this._monitors = {};
     this._handlers = {};
     this._proxyManager = new ProxyManager();
-
-    this.mergeStatusUpdates = this.mergeStatusUpdates.bind(this);
-  }
-
-  /**
-   * Handler for creating a listener for monitor events
-   * @param {Function} cb - callback function (handler)
-   */
-  registerForMonitorEvents(cb) {
-    this._events.on('status', cb);
-  }
-
-  /**
-   * Handler for removing the listener for monitor events
-   * @param {Function} cb - callback function (handler)
-   */
-  deregisterForMonitorEvents(cb) {
-    this._events.removeListener('status', cb);
   }
 
   /**
@@ -44,39 +25,6 @@ class Manager {
     const { site } = this._monitors[id];
     const newProxy = await this._proxyManager.swap(proxyId, site, shouldBan);
     this._events.emit(Events.SendProxy, id, newProxy);
-  }
-
-  /**
-   * Merges outgoing status updates for stores
-   * @param {String} monitorId - id for the monitor process emitting the event
-   * @param {Object} status - the new status being emitted
-   * @param {Any} event - any args passed through
-   */
-  mergeStatusUpdates(monitorId, status, event) {
-    if (event === Events.Status) {
-      const { id } = this._monitors[monitorId];
-      this._events.emit('status', id, status, event);
-    }
-  }
-
-  /**
-   * Changes the delay for a list of stores
-   * @param {List} stores - list of stores to change the delay
-   * @param {Number} delay - new delay
-   * @param {String} type - type of delay
-   */
-  changeDelay(stores, delay, type) {
-    stores.forEach(s => this._events.emit(Events.ChangeDelay, s, delay, type));
-  }
-
-  /**
-   * Changes the webhook for a list of stores
-   * @param {List<Object>} stores - list of stores to change the webhook
-   * @param {} hook - new webhook
-   * @param {*} type - type of webhook
-   */
-  changeWebhook(stores, hook, type) {
-    stores.forEach(s => this._events.emit(Events.ChangeWebhook, s, hook, type));
   }
 
   /**
@@ -240,7 +188,6 @@ class Manager {
     });
     this._handlers[monitor.id] = handlers;
 
-    monitor.registerForEvent(Monitor.Events.Status, this.mergeStatusUpdates);
     monitor._events.on(Monitor.Events.SwapProxy, this.handleProxySwap, this);
   }
 
@@ -268,27 +215,17 @@ class Manager {
   async _start([id, data, proxy]) {
     const { site, keywords } = data;
 
-    console.log('running on site: %s', site.url);
-
     // see if we currently have a monitor running that is on that site
-    let monitor = Object.keys(this._monitors).find(k => {
-      if (this._monitors[k].data.site.url === site.url) {
-        return this._monitors[k];
-      }
-    });
+    let monitor = Object.values(this._monitors).find(m => m.data.site.url === site.url);
 
     if (!monitor) {
       // if we didn't find an existing monitor, setup a new one
       monitor = new Monitor(id, data, proxy);
       console.log('created new monitor: %j', monitor.id);
     } else {
-      console.log('found existing monitor: %s', monitor.id);
-      // otherwise, add to the keywords (filtering out duplicates)..
-      const { positive, negative } = monitor.data.keywords;
-      monitor.data.keywords = {
-        positive: union(positive, keywords.positive),
-        negative: union(negative, keywords.negative),
-      };
+      monitor = this._monitors[monitor.id];
+      monitor._events.emit(Events.UpdateKeywords, keywords);
+      return;
     }
 
     // monitor.site = monitor.site.url;
@@ -299,7 +236,6 @@ class Manager {
     try {
       await monitor.start();
     } catch (error) {
-      console.log(error);
       // fail silently...
     }
 

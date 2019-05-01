@@ -1,9 +1,9 @@
 {
-  "SOLE_AIO": "http://localhost:4444/?url=",
-  "ANOTHER_NIKE_BOT": "http://127.0.0.1:54685/discorLink?url=",
-  "CYBER": "https://cybersole.io/dashboard/quicktask?url=",
-  "PROJECT_DESTROYER": "https://api.destroyerbots.io/quicktask?url=",
-  "DASHE": "https://api.dashe.io/v1/actions/quicktask?url=",
-  "THE_KICK_STATION": "https://thekickstationapi.com/quick-task.php?link={}&autostart=true&isatclink=false",
-  "EVE_ROBOTICS": "http://remote.eve-backend.net/api/quick_task?link="
+  "SoleAIO": "http://localhost:4444/?url=",
+  "ANB": "http://127.0.0.1:54685/discorLink?url=",
+  "Cyber": "https://cybersole.io/dashboard/quicktask?url=",
+  "PD": "https://api.destroyerbots.io/quicktask?url=",
+  "Dashe": "https://api.dashe.io/v1/actions/quicktask?url=",
+  "TKS": "https://thekickstationapi.com/quick-task.php?link=",
+  "Eve": "http://remote.eve-backend.net/api/quick_task?link="
 }

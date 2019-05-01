@@ -1,11 +1,10 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
-const { delay, rfrl, ErrorCodes, format, userAgent } = require('./utils/constants').Utils;
-const { States, Events, Delays, Hooks } = require('./utils/constants').Monitor;
-const ManagerEvents = require('./utils/constants').Manager.Events;
+const { Events: ManagerEvents } = require('./utils/constants').Manager;
+const { delay, rfrl } = require('./utils/constants').Utils;
+const { States, Events: MonitorEvents } = require('./utils/constants').Monitor;
 const { ParseType, getParseType } = require('./utils/parse');
-const { generateAvailableVariants } = require('./utils/generateVariants');
-const { Parser, AtomParser, JsonParser, XmlParser, getSpecialParser } = require('./parsers');
+const { AtomParser, JsonParser, XmlParser } = require('./parsers');
 
 const { Discord, Slack } = require('./hooks');
 const Product = require('./product');
@@ -27,8 +26,19 @@ class Monitor {
     return this._proxy;
   }
 
-  constructor(id, data, proxy) {
+  constructor(id, site, data, proxy) {
+    /**
+     * @type {String} the id of the monitor process
+     */
     this._id = id;
+    this._site = site;
+
+    /**
+     * @type {Array<Object>}
+     * - keywords [{ positive, negative }, { positive, negative}]
+     * - monitorDelay: Number
+     * - errorDelay: Number
+     */
     this._data = data;
     this._proxy = proxy;
 
@@ -40,29 +50,21 @@ class Monitor {
     this.stop = false;
     this._state = States.Start;
 
-    this._context = {
-      id,
-      data,
-      proxy: proxy ? proxy.proxy : null,
-      status: null,
-      request: this._request,
-      discord: data.discord ? new Discord(data.discord) : null,
-      slack: data.slack ? new Slack(data.slack) : null,
-      abort: false,
-    };
-
-    this._parseType = getParseType(this._context.data.keywords, this._context.data.site);
-
     this._events = new EventEmitter();
 
-    this._handleAbort = this._handleAbort.bind(this);
-    this._events.on(ManagerEvents.ChangeDelay, this._changeDelay, this);
-    this._events.on(ManagerEvents.ChangeWebhook, this._changeWebhook, this);
+    this._events.on(ManagerEvents.UpdateKeywords, this.handleUpdateKeywords, this);
+  }
+
+  async handleUpdateKeywords(id, keywords) {
+    if (id === this.id) {
+      // TODO: Test this!
+      this.data.keywords.push({ ...keywords });
+    }
   }
 
   async swapProxies() {
     // emit the swap event
-    this._events.emit(Events.SwapProxy, this.id, this.proxy, this.shouldBanProxy);
+    this._events.emit(MonitorEvents.SwapProxy, this.id, this.proxy, this.shouldBanProxy);
     return new Promise((resolve, reject) => {
       let timeout;
       const proxyHandler = (id, proxy) => {
@@ -72,12 +74,12 @@ class Monitor {
         resolve(proxy);
       };
       timeout = setTimeout(() => {
-        this._events.removeListener(Events.ReceiveProxy, proxyHandler);
+        this._events.removeListener(MonitorEvents.ReceiveProxy, proxyHandler);
         if (timeout) {
           reject(new Error('Timeout'));
         }
       }, 10000); // TODO: Make this a variable delay?
-      this._events.once(Events.ReceiveProxy, proxyHandler);
+      this._events.once(MonitorEvents.ReceiveProxy, proxyHandler);
     });
   }
 
@@ -201,54 +203,35 @@ class Monitor {
     return this._delay(delayStatus || 404);
   }
 
-  static _generateVariants(product) {
-    let variants;
-    try {
-      ({ variants } = generateAvailableVariants(product));
-    } catch (err) {
-      if (err.code === ErrorCodes.VariantsNotMatched) {
-        return {
-          status: 'Unable to match',
-          nextState: States.Stop,
-        };
-      }
-      if (err.code === ErrorCodes.VariantsNotAvailable) {
-        return {
-          status: 'Restock Mode',
-          nextState: States.Stock,
-        };
-      }
-      return {
-        status: 'Monitor has errored out!',
-        nextState: States.Error,
-      };
-    }
-    return variants;
+  static _generateVariants(products) {
+    // TODO: is there a better way to do this?
+    return products.forEach(p => p.variants.filter(v => v.available));
   }
 
-  _parseAll() {
+  _parseAll(keywords) {
     // Create the parsers and start the async run methods
     const parsers = [
-      new AtomParser(this.request, this.data, this.proxy, this._parseType),
-      new JsonParser(this.request, this.data, this.proxy, this._parseType),
-      new XmlParser(this.request, this.data, this.proxy, this._parseType),
+      new AtomParser(this.request, this.site, keywords, this.proxy),
+      new JsonParser(this.request, this.site, keywords, this.proxy),
+      new XmlParser(this.request, this.site, keywords, this.proxy),
     ].map(p => p.run());
     // Return the winner of the race
     return rfrl(parsers, 'parseAll');
   }
 
-  async _monitorKeywords() {
-    let parsed;
+  async _monitorKeywords(keywords) {
+    let products;
     try {
       // Try parsing all files and wait for the first response
-      parsed = await this._parseAll();
+      products = await this._parseAll(keywords);
     } catch (errors) {
+      console.log(errors);
       return this._handleParsingErrors(errors);
     }
 
     console.log(products);
 
-    const { variants, nextState } = Monitor._generateVariants(products);
+    const variants = Monitor._generateVariants(products);
     // TODO: Compare all products data with current exising record in DB
     /**
      * NEXT STATE
@@ -257,135 +240,28 @@ class Monitor {
      */
   }
 
-  async _monitorUrl() {
-    const [url] = this._context.data.product.url.split('?');
-    try {
-      await this._request({
-        method: 'GET',
-        uri: url,
-        proxy: format(this._context.proxy),
-        rejectUnauthorized: false,
-        followAllRedirects: true,
-        resolveWithFullResponse: true,
-        simple: true,
-        gzip: true,
-        headers: {
-          'User-Agent': userAgent,
-        },
-      });
-
-      let fullProductInfo;
-      try {
-        // Try getting full product info
-        fullProductInfo = await Parser.getFullProductInfo(url, this._request);
-      } catch (errors) {
-        return this._handleParsingErrors(errors);
-      }
-
-      this._context.data.product.restockUrl = url; // Store restock url in case all variants are out of stock
-      const { variants, nextState, status } = Monitor._generateVariants(fullProductInfo);
-      // check for next state (means we hit an error when generating variants)
-      if (nextState) {
-        return { nextState, status };
-      }
-      this._context.data.product.variants = variants;
-
-      this._context.data.product.name = fullProductInfo.title;
-      return {
-        status: `Found product: ${this._context.task.product.name}`,
-        nextState: States.CheckStock,
-      };
-    } catch (error) {
-      return this._delay(error.statusCode);
-    }
-  }
-
-  async _monitorSpecial() {
-    const { task, proxy } = this._context;
-    const { product, site } = task;
-    // Get the correct special parser
-    const ParserCreator = getSpecialParser(site);
-    const parser = ParserCreator(this._request, task, proxy);
-
-    let parsed;
-    try {
-      parsed = await parser.run();
-    } catch (error) {
-      // Check for a product not found error
-      if (error.status === ErrorCodes.ProductNotFound) {
-        return { status: 'Product Not Found!', nextState: States.Error };
-      }
-      return this._delay(error.status);
-    }
-    this._context.task.product.restockUrl = parsed.url; // Store restock url in case all variants are out of stock
-    let variants;
-    let sizes;
-    let nextState;
-    let status;
-    if (product.variant) {
-      variants = [product.variant];
-    } else {
-      ({ variants, nextState, status } = Monitor._generateVariants(parsed));
-      // check for next state (means we hit an error when generating variants)
-      if (nextState) {
-        return { nextState, status };
-      }
-    }
-
-    this._context.data.product.variants = variants;
-    this._context.data.product.chosenSizes = sizes;
-    this._context.data.product.name = parsed.title;
-    return {
-      status: `Found product: ${this._context.data.product.name}`,
-      nextState: States.Parse,
-    };
-  }
-
   async _handleParse() {
-    const { abort } = this._context;
-    const { status } = this._context;
-
-    if (abort) {
-      return States.Abort;
-    }
-
-    let nextState;
-    let newStatus;
-    switch (this._parseType) {
-      case ParseType.Url: {
-        ({ nextState, status: newStatus } = await this._monitorUrl());
-        break;
-      }
-      case ParseType.Keywords: {
-        ({ nextState, status: newStatus } = await this._monitorKeywords());
-        break;
-      }
-      case ParseType.Special: {
-        ({ nextState, status: newStatus } = await this._monitorSpecial());
-        break;
-      }
-      default: {
-        return { status: 'Invalid Product Input', nextState: States.Error };
-      }
-    }
-    if (nextState === States.Error) {
-      newStatus = status;
-    }
-    return { nextState, status: newStatus };
-  }
-
-  async _handleStock() {
-    if (this._context.abort) {
-      return States.Abort;
-    }
-    // TODO: run checking for stock methods
-  }
-
-  async _handleNotify() {
-    if (this._context.abort) {
-      return States.Abort;
-    }
-    // TODO: send webhooks
+    // TODO: loop over each "pair" of keywords
+    this.data.keywords.forEach(pair => this._monitorKeywords(pair));
+    // let nextState;
+    // switch (this.parseType) {
+    //   case ParseType.Url: {
+    //     ({ nextState } = await this._monitorUrl());
+    //     break;
+    //   }
+    //   case ParseType.Keywords: {
+    //     ({ nextState } = await this._monitorKeywords());
+    //     break;
+    //   }
+    //   case ParseType.Special: {
+    //     ({ nextState } = await this._monitorSpecial());
+    //     break;
+    //   }
+    //   default: {
+    //     return { nextState: States.Stop };
+    //   }
+    // }
+    // return { nextState };
   }
 
   async _handleSwapProxy() {
@@ -404,15 +280,7 @@ class Monitor {
         this.shouldBanProxy = 0; // reset ban flag
         return this._prevState;
       }
-
-      // If we get a null proxy back, there aren't any available..
       await delay(errorDelay);
-      // If we have a hard ban, continue waiting for open proxy
-      if (this.shouldBanProxy > 0) {
-        this._emitEvent({
-          status: `No open proxies! Delaying ${errorDelay}ms...`,
-        });
-      }
     } catch (err) {
       this._emitEvent({ status: 'Error swapping proxies!' });
     }
@@ -445,7 +313,7 @@ class Monitor {
 
     const StateMap = {
       [States.Parse]: this._handleParse,
-      [States.Stock]: this._handleStock,
+      [States.Compare]: this._handleCompare,
       [States.Notify]: this._handleNotify,
       [States.SwapProxies]: this._handleSwapProxy,
       [States.Error]: this._handleEndState,
@@ -491,7 +359,7 @@ class Monitor {
   }
 }
 
-Monitor.Events = Events;
+Monitor.Events = MonitorEvents;
 Monitor.States = States;
 
 module.exports = Monitor;

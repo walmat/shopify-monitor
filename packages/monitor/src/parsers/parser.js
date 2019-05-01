@@ -1,5 +1,5 @@
 /* eslint-disable class-methods-use-this */
-const { ParseType, matchKeywords } = require('../utils/parse');
+const { matchKeywords } = require('../utils/parse');
 const { format, userAgent, rfrl } = require('../utils/constants').Utils;
 
 class Parser {
@@ -75,12 +75,12 @@ class Parser {
   /**
    * Construct a new parser
    */
-  constructor(request, data, proxy, type, name) {
-    this._name = name || 'Parser';
-    this._proxy = proxy;
+  constructor(request, site, data, proxy, name) {
     this._request = request;
+    this._site = site;
     this._data = data;
-    this._type = type;
+    this._proxy = proxy;
+    this._name = name || 'Parser';
   }
 
   /**
@@ -98,25 +98,15 @@ class Parser {
    * Perform Product Matching based on the parse type
    */
   match(products) {
-    switch (this._type) {
-      case ParseType.Keywords: {
-        const keywords = {
-          pos: this._data.product.positive,
-          neg: this._data.product.negative,
-        };
-        const matchedProducts = matchKeywords(products, keywords);
-        if (!matchedProducts) {
-          const error = new Error('ProductNotFound');
-          error.status = 404;
-          throw error;
-        }
-        return product;
+    let matchedProducts;
+    this._data.keywords.forEach(pair => {
+      const { positive, negative } = pair;
+      const matches = matchKeywords(products, { pos: positive, neg: negative });
+
+      if (matches) {
+        matchedProducts.push(matches);
       }
-      default: {
-        // TODO: Create an ErrorCode for this
-        throw new Error('InvalidParseType');
-      }
-    }
+    });
   }
 }
 

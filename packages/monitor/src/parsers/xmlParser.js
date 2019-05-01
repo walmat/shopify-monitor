@@ -9,16 +9,12 @@ class XmlParser extends Parser {
    * @param {Object} data the data we want to parse and match
    * @param {Proxy} the proxy to use when making requests
    */
-  constructor(request, data, proxy, type) {
-    super(request, data, proxy, type, 'XmlParser');
+  constructor(request, site, data, proxy) {
+    super(request, site, data, proxy, 'XmlParser');
   }
 
   async run() {
-    if (this._type !== ParseType.Keywords) {
-      throw new Error('xml parsing is only supported for keyword searching');
-    }
-
-    const { url } = this._data.site;
+    const { url } = this._site;
     let responseJson;
     try {
       const response = await this._request({
