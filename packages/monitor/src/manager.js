@@ -67,10 +67,21 @@ class Manager {
    * @param {Object} data - mapped from `monitorInfo` in `packages/structures/src/definitions/monitorInfo.js`
    */
   async start(data) {
-    const alreadyStarted = Object.values(this._monitors).find(s => s.id === data.id);
-    if (alreadyStarted) {
+    // Find an existing monitor based on the site
+    const existingMonitor = Object.values(this._monitors).find(s => s.site.url === data.site.url);
+    if (existingMonitor) {
+      if (existingMonitor.monitorIds.includes(data.id)) {
+        // Existing monitor also includes the same data id, so we're already monitoring
+        return;
+      }
+
+      // Existing monitor does not include the same data id, so add it
+      existingMonitor.monitorIds.push(data.id);
+      // TODO: We might need to change the method that gets called here!
+      existingMonitor.addMonitorData(data);
       return;
     }
+
     const { id, openProxy } = await this.setup(data.site.url);
 
     this._start([id, data, openProxy]).then(() => {
@@ -213,20 +224,7 @@ class Manager {
    * @param {List} param0 [monitor id, monitor data, proxy]
    */
   async _start([id, data, proxy]) {
-    const { site, keywords } = data;
-
-    // see if we currently have a monitor running that is on that site
-    let monitor = Object.values(this._monitors).find(m => m.data.site.url === site.url);
-
-    if (!monitor) {
-      // if we didn't find an existing monitor, setup a new one
-      monitor = new Monitor(id, data, proxy);
-      console.log('created new monitor: %j', monitor.id);
-    } else {
-      monitor = this._monitors[monitor.id];
-      monitor._events.emit(Events.UpdateKeywords, keywords);
-      return;
-    }
+    const monitor = new Monitor(id, data, proxy);
 
     // monitor.site = monitor.site.url;
     this._monitors[id] = monitor;
