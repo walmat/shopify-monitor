@@ -24,7 +24,7 @@
     "express-graphql": "^0.8.0",
     "graphql": "^14.2.1",
     "react-grid-system": "^4.4.3",
-    "shortid": "^2.2.14"
+    "uuid": "^3.3.2"
   },
   "devDependencies": {
     "concurrently": "^4.1.0",
