@@ -171,32 +171,40 @@ class Manager {
     const handlers = {};
 
     // Generate Handlers for each event
-    [Events.Abort, Events.SendProxy, Events.ChangeDelay, Events.ChangeWebhook].forEach(event => {
-      let handler;
-      switch (event) {
-        case Events.Abort: {
-          handler = id => {
-            if (id === monitor.id || id === 'ALL') {
-              monitor._handleAbort(monitor.id);
-            }
-          };
-          break;
+    [Events.Abort, Events.SendProxy, Events.AddMonitorData, Events.RemoveMonitorData].forEach(
+      event => {
+        let handler;
+        switch (event) {
+          case Events.SendProxy: {
+            const sideEffects = (id, proxy) => {
+              this._monitors[id].proxy = proxy;
+            };
+            handler = handlerGenerator(Monitor.Events.ReceiveProxy, sideEffects);
+            break;
+          }
+          case Events.AddMonitorData: {
+            const sideEffects = (id, data) => {
+              this._monitors[id].monitorIds.push(data.id);
+            };
+            handler = handlerGenerator(Events.AddMonitorData, sideEffects);
+            break;
+          }
+          case Events.RemoveMonitorData: {
+            const sideEffects = (id, data) => {
+              this._monitors[id].monitorIds = this._monitors[id].monitorIds.filter(id !== data.id);
+            };
+            handler = handlerGenerator(Events.RemoveMonitorData, sideEffects);
+            break;
+          }
+          default: {
+            handler = handlerGenerator(event, null);
+            break;
+          }
         }
-        case Events.SendProxy: {
-          const sideEffects = (id, proxy) => {
-            this._monitors[id].proxy = proxy;
-          };
-          handler = handlerGenerator(Monitor.Events.ReceiveProxy, sideEffects);
-          break;
-        }
-        default: {
-          handler = handlerGenerator(event, null);
-          break;
-        }
-      }
-      handlers[event] = handler;
-      this._events.on(event, handler, this);
-    });
+        handlers[event] = handler;
+        this._events.on(event, handler, this);
+      },
+    );
     this._handlers[monitor.id] = handlers;
 
     monitor._events.on(Monitor.Events.SwapProxy, this.handleProxySwap, this);
