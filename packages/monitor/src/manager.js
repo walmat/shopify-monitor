@@ -75,10 +75,8 @@ class Manager {
         return;
       }
 
-      // Existing monitor does not include the same data id, so add it
-      existingMonitor.monitorIds.push(data.id);
-      // TODO: We might need to change the method that gets called here!
-      existingMonitor.addMonitorData(data);
+      // Emit an event to send the data to the monitor
+      this._events.emit(Events.AddMonitorData, existingMonitor.id, data);
       return;
     }
 
@@ -115,6 +113,22 @@ class Manager {
    * @param {Object} data the task to stop
    */
   stop(data) {
+    const existingMonitor = Object.values(this._monitors).find(s => s.site.url === data.site.url);
+    if (!existingMonitor || !existingMonitor.monitorIds.includes(data.id)) {
+      // No monitor was found or existing monitor did not include the monitor data,
+      // so we don't need to do anything
+      return null;
+    }
+
+    if (existingMonitor.monitorIds.length === 1) {
+      // Existing monitor includes the monitor data, and that's the only one left -- we can abort the
+      // monitor
+      this._events.emit(Events.Abort, existingMonitor.id);
+    } else {
+      // Existing monitor includes the monitor data, as well as other monitor data objects, so we should
+      // remove the given monitor data, but not abort the whole monitor
+      this._events.emit(Events.RemoveMonitorData, existingMonitor.id, data);
+    }
     const id = Object.keys(this._monitors).find(k => this._monitors[k].id === data.id);
     if (!id) {
       return null;
