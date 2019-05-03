@@ -1,9 +1,9 @@
 const EventEmitter = require('eventemitter3');
 const shortid = require('shortid');
 
-const Monitor = require('./monitor');
-const ProxyManager = require('./proxy');
-const { Events } = require('./utils/constants').Manager;
+const Monitor = require('../monitor');
+const ProxyManager = require('../proxy');
+const { Events } = require('../utils/constants').Manager;
 
 class Manager {
   constructor() {
