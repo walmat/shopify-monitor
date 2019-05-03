@@ -110,9 +110,9 @@ class Manager {
    * This method does nothing if the given process has already stopped or
    * if it was never started.
    *
-   * @param {Object} data the task to stop
+   * @param {Object} data the monitor data to stop
    */
-  stop(data) {
+  stop(data, options = {}) {
     const existingMonitor = Object.values(this._monitors).find(s => s.site.url === data.site.url);
     if (!existingMonitor || !existingMonitor.monitorIds.includes(data.id)) {
       // No monitor was found or existing monitor did not include the monitor data,
@@ -120,9 +120,9 @@ class Manager {
       return null;
     }
 
-    if (existingMonitor.monitorIds.length === 1) {
-      // Existing monitor includes the monitor data, and that's the only one left -- we can abort the
-      // monitor
+    if (existingMonitor.monitorIds.length === 1 || options.force) {
+      // Existing monitor includes the monitor data, and there is only one left -- we can abort the
+      // monitor OR the force option is passed
       this._events.emit(Events.Abort, existingMonitor.id);
     } else {
       // Existing monitor includes the monitor data, as well as other monitor data objects, so we should
@@ -146,17 +146,19 @@ class Manager {
     let monitorsToStop = monitors;
 
     if (force) {
-      monitorsToStop = Object.values(this._monitors).map(({ id }) => ({ id }));
+      // Choose one monitor data group from each monitor so we don't try to force stop
+      // a single monitor process multiple times
+      monitorsToStop = Object.values(this._monitors).map(({ monitorIds }) => monitorIds[0]);
     }
-    return [...monitorsToStop].map(m => this.stop(m, { wait }));
+    return [...monitorsToStop].map(m => this.stop(m, { wait, force }));
   }
 
   /**
    * Check if a monitor is running
    * @param {Object} monitor the monitor to check
    */
-  isRunning(monitor) {
-    return !!this._monitors.find(m => m.id === monitor.id);
+  isRunning(monitorData) {
+    return !!this._monitors.find(m => m.monitorIds.includes(monitorData.id));
   }
 
   /**
