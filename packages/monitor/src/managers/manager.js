@@ -167,9 +167,10 @@ class Manager {
    * @param {Object} monitor - monitor object
    */
   _setup(monitor) {
+    const mId = monitor.id;
     const handlerGenerator = (event, sideEffects) => (id, ...params) => {
-      if (id === monitor.id || id === 'ALL') {
-        const args = [monitor.id, ...params];
+      if (id === mId || id === 'ALL') {
+        const args = [mId, ...params];
         if (sideEffects) {
           sideEffects.apply(this, args);
         }
