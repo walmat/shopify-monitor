@@ -129,14 +129,7 @@ class Manager {
       // remove the given monitor data, but not abort the whole monitor
       this._events.emit(Events.RemoveMonitorData, existingMonitor.id, data);
     }
-    const id = Object.keys(this._monitors).find(k => this._monitors[k].id === data.id);
-    if (!id) {
-      return null;
-    }
-
-    // Send abort signal
-    this._events.emit(Events.Abort, id);
-    return id;
+    return existingMonitor.id;
   }
 
   /**
