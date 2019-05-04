@@ -3,11 +3,7 @@ const request = require('request-promise');
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
 const { delay, rfrl } = require('./utils/constants').Utils;
 const { States, Events: MonitorEvents } = require('./utils/constants').Monitor;
-const { ParseType, getParseType } = require('./utils/parse');
 const { AtomParser, JsonParser, XmlParser } = require('./parsers');
-
-const { Discord, Slack } = require('./hooks');
-const Product = require('./product');
 
 class Monitor {
   get state() {
@@ -53,6 +49,7 @@ class Monitor {
     this._events = new EventEmitter();
 
     this._events.on(ManagerEvents.UpdateKeywords, this.handleUpdateKeywords, this);
+    // this._events.on(ManagerEvents.)
   }
 
   async handleUpdateKeywords(id, keywords) {
@@ -81,46 +78,6 @@ class Monitor {
       }, 10000); // TODO: Make this a variable delay?
       this._events.once(MonitorEvents.ReceiveProxy, proxyHandler);
     });
-  }
-
-  // MARK: Event Registration
-  registerForEvent(event, callback) {
-    switch (event) {
-      case Events.Status: {
-        this._events.on(Events.Status, callback);
-        break;
-      }
-      default:
-        break;
-    }
-  }
-
-  deregisterForEvent(event, callback) {
-    switch (event) {
-      case Events.Status: {
-        this._events.removeListener(Events.Status, callback);
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  }
-
-  _emitEvent(event, payload = {}) {
-    switch (event) {
-      // Emit supported events on their specific channel
-      case Events.Status: {
-        if (payload.status && payload.status !== this._context.status) {
-          this._context.status = payload.status;
-          this._events.emit(event, this._context.id, payload, event);
-        }
-        break;
-      }
-      default: {
-        break;
-      }
-    }
   }
 
   _handleAbort(id) {
@@ -154,11 +111,7 @@ class Monitor {
     }
   }
 
-  _cleanup() {
-    if (this.TODO) {
-      console.log(new Error('IMPLEMENT _cleanup'));
-    }
-  }
+  _cleanup() {}
 
   async _delay(status) {
     let timeout = this._context.data.monitorDelay;
@@ -171,8 +124,8 @@ class Monitor {
         break;
     }
     await delay(timeout);
-    console.log('monitoring...');
-    return { status: `Monitoring`, nextState: States.Parse };
+
+    return { nextState: States.Parse };
   }
 
   async _handleParsingErrors(errors) {
@@ -195,7 +148,6 @@ class Monitor {
       // we can assume that it's a soft ban by default since it's either ban || hardBan
       const shouldBan = hardBan ? 2 : 1;
       return {
-        message: 'Swapping proxy',
         shouldBan,
         nextState: States.SwapProxies,
       };
@@ -225,7 +177,6 @@ class Monitor {
       // Try parsing all files and wait for the first response
       products = await this._parseAll(keywords);
     } catch (errors) {
-      console.log(errors);
       return this._handleParsingErrors(errors);
     }
 
@@ -282,27 +233,12 @@ class Monitor {
       }
       await delay(errorDelay);
     } catch (err) {
-      this._emitEvent({ status: 'Error swapping proxies!' });
+      // TODO: handle proxy swapping errors
     }
-    // Go back to previous state
     return this._prevState;
   }
 
   async _handleEndState() {
-    let status = 'stopped';
-    switch (this._state) {
-      case States.Abort:
-        status = 'aborted';
-        break;
-      case States.Error:
-        status = 'errored';
-        break;
-      case States.Stop:
-        status = 'stopped';
-        break;
-      default:
-        break;
-    }
     return States.Stop;
   }
 
