@@ -20,4 +20,5 @@ describe('monitor info spec', () => {
     'keywords',
   );
   specTester.testKey([initialSite], [null, undefined, false, 80, 'test', [], {}], 'site');
+  specTester.testKey([[], [initialSite]], [null, undefined, false, 80, 'test', '', {}], 'webhooks');
 });

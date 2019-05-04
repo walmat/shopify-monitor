@@ -1,4 +1,10 @@
-import { GraphQLObjectType, GraphQLNonNull, GraphQLString, GraphQLInputObjectType } from 'graphql';
+import {
+  GraphQLObjectType,
+  GraphQLBoolean,
+  GraphQLNonNull,
+  GraphQLString,
+  GraphQLInputObjectType,
+} from 'graphql';
 
 export const VariantType = new GraphQLObjectType({
   name: 'Variant',
@@ -11,6 +17,10 @@ export const VariantType = new GraphQLObjectType({
     size: {
       type: GraphQLNonNull(GraphQLString),
       description: 'The size associated with the variant',
+    },
+    inStock: {
+      type: GraphQLNonNull(GraphQLBoolean),
+      description: 'Flag indicating whether or not the variant is in stock',
     },
   }),
 });
@@ -26,6 +36,10 @@ export const VariantInputType = new GraphQLInputObjectType({
     size: {
       type: GraphQLString,
       description: 'The size associated with the variant',
+    },
+    inStock: {
+      type: GraphQLBoolean,
+      description: 'Flag indicating whether or not the variant is in stock',
     },
   }),
 });

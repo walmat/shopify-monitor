@@ -4,4 +4,5 @@
 export default {
   id: '',
   size: '',
+  inStock: false,
 };

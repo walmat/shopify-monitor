@@ -8,4 +8,5 @@ describe('variant spec', () => {
 
   specTester.testKey(['', 'test'], [null, false, undefined, 8, [], {}], 'id');
   specTester.testKey(['', 'test'], [null, false, undefined, 8, [], {}], 'size');
+  specTester.testKey([false, true], [null, undefined, 8, [], {}], 'inStock');
 });
