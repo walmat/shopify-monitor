@@ -69,6 +69,10 @@ class Monitor {
     this._events.on(ManagerEvents.UpdateMonitorData, this._handleUpdateMonitorData, this);
   }
 
+  notifyProductUpdate(type, product, webhooks) {
+    this._events.emit(MonitorEvents.NotifyProduct, product, type, webhooks);
+  }
+
   async swapProxies() {
     // emit the swap event
     this._events.emit(MonitorEvents.SwapProxy, this.id, this.proxy, this.shouldBanProxy);
