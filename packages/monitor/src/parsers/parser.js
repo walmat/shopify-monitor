@@ -16,11 +16,12 @@ class Parser {
    * @param {String} productUrl
    */
   static getFullProductInfo(productUrl, request) {
+    console.log(productUrl);
     const genRequestPromise = uri =>
       request({
         method: 'GET',
         uri,
-        proxy: format(this._proxy) || undefined,
+        proxy: format(this._proxy),
         rejectUnauthorized: false,
         json: false,
         simple: true,
@@ -107,7 +108,7 @@ class Parser {
         matchedProducts.push(matches);
       }
     });
-    console.log(`[DEBUG]: Matched products: ${matchedProducts}`);
+    // console.log(`[DEBUG]: %s Matched products: %j`, this._name, matchedProducts);
     return matchedProducts;
   }
 }

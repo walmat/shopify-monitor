@@ -1,7 +1,7 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
-const { delay, rfrl } = require('./utils/constants').Utils;
+const { delay, reflect } = require('./utils/constants').Utils;
 const { States, Events: MonitorEvents, ErrorCodes } = require('./utils/constants').Monitor;
 const { AtomParser, JsonParser, XmlParser } = require('./parsers');
 
@@ -207,9 +207,9 @@ class Monitor {
       new AtomParser(this._request, this._data, this._proxy),
       new JsonParser(this._request, this._data, this._proxy),
       new XmlParser(this._request, this._data, this._proxy),
-    ].map(p => p.run());
-    // Return the winner of the race
-    return rfrl(parsers, 'parseAll');
+    ].map(p => reflect(p.run()));
+    // Return all the data from all the parsers
+    return Promise.all(parsers);
   }
 
   async _monitorKeywords() {
@@ -218,11 +218,19 @@ class Monitor {
       // Try parsing all files and wait for the first response
       products = await this._parseAll();
     } catch (errors) {
-      console.log(errors);
       return this._handleParsingErrors(errors);
     }
 
-    console.log(`[DEBUG]: PRODUCTS: ${products}`);
+    // filter out errors
+    products = products.filter(p => p.status === 'resolved');
+
+    console.log('[DEBUG]: Filtered errors: %j', products);
+
+    // TODO:
+    // 1. filter out any similar results
+    // 2. get full product data for remaining results
+    // 3. generate variant data for full product data
+    // 4. send to manager at this point?
 
     const variants = Monitor._generateVariants(products);
     console.log(`[DEBUG]: VARIANTS: ${variants}`);

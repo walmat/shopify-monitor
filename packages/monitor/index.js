@@ -35,7 +35,7 @@ const data = {
   },
   keywords: [
     {
-      positive: ['fear', 'strap'],
+      positive: ['jordan', 'retro'],
       negative: [],
       value: '+yeezy,+boucle',
     },

@@ -43,26 +43,13 @@ class XmlParser extends Parser {
       handle: item.loc[0].substring(item.loc[0].lastIndexOf('/')),
     }));
     const matchedProducts = super.match(products);
-    console.log(matchedProducts);
 
-    if (!matchedProducts) {
-      throw new Error('unable to match the product');
+    if (!matchedProducts.length) {
+      const rethrow = new Error('Unable to match products!');
+      rethrow.status = 500; // bad status message
+      throw rethrow;
     }
-    const fullProductsInfo = [];
-    try {
-      matchedProducts.forEach(product => {
-        const info = Parser.getFullProductInfo(product.url, this._request);
-
-        if (!info) {
-          // TODO: should we throw here?
-          throw new Error('Unable to get full product info!');
-        }
-        fullProductsInfo.push(info);
-      });
-      return fullProductsInfo;
-    } catch (errors) {
-      throw new Error('unable to get full product info');
-    }
+    return matchedProducts;
   }
 }
 module.exports = XmlParser;

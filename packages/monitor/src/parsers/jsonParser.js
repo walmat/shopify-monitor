@@ -37,8 +37,10 @@ class JsonParser extends Parser {
     }
     const matchedProducts = super.match(products);
 
-    if (!matchedProducts) {
-      throw new Error('unable to match products');
+    if (!matchedProducts.length) {
+      const rethrow = new Error('Unable to match products!');
+      rethrow.status = 500; // bad status message
+      throw rethrow;
     }
     return matchedProducts;
   }

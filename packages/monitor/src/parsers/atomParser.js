@@ -54,28 +54,12 @@ class AtomParser extends Parser {
     }));
     const matchedProducts = super.match(products);
 
-    if (!matchedProducts) {
-      throw new Error('unable to match the product');
-    }
-
-    const fullProductsInfo = [];
-    try {
-      matchedProducts.forEach(product => {
-        const info = Parser.getFullProductInfo(product.url, this._request);
-
-        if (!info) {
-          // TODO: should we throw here?
-          throw new Error('Unable to get full product info!');
-        }
-        fullProductsInfo.push(info);
-      });
-
-      return fullProductsInfo;
-    } catch (errors) {
-      const rethrow = new Error('Failed getting full product info!');
-      rethrow.status = 500; // Use a bad status code
+    if (!matchedProducts.length) {
+      const rethrow = new Error('Unable to match products!');
+      rethrow.status = 500; // bad status message
       throw rethrow;
     }
+    return matchedProducts;
   }
 }
 module.exports = AtomParser;
