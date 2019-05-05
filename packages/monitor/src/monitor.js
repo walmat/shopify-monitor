@@ -57,6 +57,7 @@ class Monitor {
     this._events.on(ManagerEvents.Abort, this._handleAbort, this);
     this._events.on(ManagerEvents.AddMonitorData, this._handleAddMonitorData, this);
     this._events.on(ManagerEvents.RemoveMonitorData, this._handleRemoveMonitorData, this);
+    this._events.on(ManagerEvents.UpdateMonitorData, this._handleUpdateMonitorData, this);
   }
 
   async swapProxies() {
@@ -210,7 +211,7 @@ class Monitor {
     this.aborted = true;
   }
 
-  _handleAddMonitorData(id, data) {
+  _handleAddMonitorData(_, data) {
     const existingDataGroup = this._dataGroups.find(d => d.id === data.id);
     if (!existingDataGroup) {
       // Only add data group if it is new
@@ -218,9 +219,32 @@ class Monitor {
     }
   }
 
-  _handleRemoveMonitorData(id, data) {
+  _handleRemoveMonitorData(_, data) {
     // Filter out the monitor infor from the tracked data groups
     this._dataGroups = this._dataGroups.filter(d => d.id !== data.id);
+  }
+
+  _handleUpdateMonitorData(_, data) {
+    const index = this._dataGroups.findIndex(d => d.id === data.id);
+    if (index === -1) {
+      // data was not found, add it to the list
+      this._dataGroups.push(data);
+    } else {
+      // Since products contains data generated and used by the monitor, we want to
+      // keep this even though the other parts of the monitorInfo object may change.
+      const { products } = this._dataGroups[index];
+      data.products.forEach(p => {
+        if (p.id !== products.id) {
+          // Only push new products that haven't been tracked before
+          products.push(p);
+        }
+      });
+      // Update the reference with the new data
+      this._dataGroups[index] = {
+        ...data,
+        products,
+      };
+    }
   }
 
   async _handleEndState() {
