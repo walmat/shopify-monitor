@@ -22,12 +22,12 @@ class Monitor {
     return this._proxy;
   }
 
-  constructor(id, site, data, proxy) {
+  constructor(id, data, proxy) {
     /**
      * @type {String} the id of the monitor process
      */
     this._id = id;
-    this._site = site;
+    this._site = data.site;
 
     /**
      * @type {List<String>} a list of ids for monitor data objects currently being monitored
