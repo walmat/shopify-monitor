@@ -1,6 +1,7 @@
 import productSpec from '../product';
 import initialProduct from '../../initialStates/product';
 import initialVariant from '../../initialStates/variant';
+import initialWebhookNotification from '../../initialStates/webhookNotification';
 
 import SpecTester from './__utils__/specTester';
 
@@ -14,10 +15,16 @@ describe('product spec', () => {
   specTester.testKey(['', 'test'], [null, false, undefined, 8, [], {}], 'image');
   specTester.testKey(['', 'test'], [null, false, undefined, 8, [], {}], 'price');
   specTester.testKey(['', 'test'], [null, false, undefined, 8, [], {}], 'timestamp');
+  specTester.testKey(['', 'test'], [null, false, undefined, 8, [], {}], 'monitorInfoId');
 
   specTester.testKey(
     [[], [{ ...initialVariant }]],
     [null, false, undefined, 8, '', {}],
     'variants',
+  );
+  specTester.testKey(
+    [[], [{ ...initialWebhookNotification }]],
+    [null, false, undefined, 8, '', {}],
+    'notifiedWebhooks',
   );
 });
