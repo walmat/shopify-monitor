@@ -55,6 +55,8 @@ class Monitor {
     this._state = States.Start;
 
     this._events.on(ManagerEvents.Abort, this._handleAbort, this);
+    this._events.on(ManagerEvents.AddMonitorData, this._handleAddMonitorData, this);
+    this._events.on(ManagerEvents.RemoveMonitorData, this._handleRemoveMonitorData, this);
   }
 
   async swapProxies() {
@@ -206,6 +208,19 @@ class Monitor {
   _handleAbort() {
     // TODO: Adjust logic to full implement stopping a monitor!
     this.aborted = true;
+  }
+
+  _handleAddMonitorData(id, data) {
+    const existingDataGroup = this._dataGroups.find(d => d.id === data.id);
+    if (!existingDataGroup) {
+      // Only add data group if it is new
+      this._dataGroups.push(data);
+    }
+  }
+
+  _handleRemoveMonitorData(id, data) {
+    // Filter out the monitor infor from the tracked data groups
+    this._dataGroups = this._dataGroups.filter(d => d.id !== data.id);
   }
 
   async _handleEndState() {
