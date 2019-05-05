@@ -58,11 +58,6 @@ class Monitor {
     this.stop = false;
     this._state = States.Start;
 
-    /**
-     * @type {String} parse type for the data that is passed through
-     */
-    this._parseType = getParseType(data.keywords, data.site);
-
     this._events.on(ManagerEvents.Abort, this._handleAbort, this);
   }
 
@@ -126,39 +121,6 @@ class Monitor {
       }
     }
   }
-
-  _handleAbort(id) {
-    if (id !== this._context.id) {
-      return;
-    }
-    this._context.abort = true;
-  }
-
-  _changeDelay(id, newDelay, type) {
-    if (id !== this._context.id) {
-      return;
-    }
-
-    if (type === Delays.Error) {
-      this._context.data.errorDelay = newDelay;
-    } else if (type === Delays.Monitor) {
-      this._context.data.monitorDelay = newDelay;
-    }
-  }
-
-  _changeWebhook(id, hook, type) {
-    if (id !== this._context.id) {
-      return;
-    }
-
-    if (type === Hooks.Discord) {
-      this._context.data.discord = hook;
-    } else if (type === Hooks.Slack) {
-      this._context.data.slack = hook;
-    }
-  }
-
-  _cleanup() {}
 
   async _delay(status) {
     let timeout = this._context.data.monitorDelay;
