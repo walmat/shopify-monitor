@@ -7,13 +7,15 @@ const WebhookManager = require('../hooks/manager');
 const { Events } = require('../utils/constants').Manager;
 
 class Manager {
-  constructor() {
+  constructor(store) {
     this._events = new EventEmitter();
 
     this._monitors = {};
     this._handlers = {};
     this._proxyManager = new ProxyManager();
     this._webhookManager = new WebhookManager();
+
+    this._store = store;
   }
 
   /**
@@ -29,11 +31,27 @@ class Manager {
     this._events.emit(Events.SendProxy, id, newProxy);
   }
 
-  async handleNotifyProduct(product, type, webhooks) {
+  async handleNotifyProduct(productData, type, webhooks) {
+    const product = { ...productData };
+    try {
+      const existing = await this._store.products.read(product.id);
+      // Update starting point of notified webhooks so we save the data between updates
+      product.notifiedWebhooks = existing.notifiedWebhooks;
+    } catch (_) {
+      // fail silently...
+    }
+
     webhooks.forEach(w => {
+      // Send a webhook and add an entry for the webhook in our notified list
       this._webhookManager.sendWebhook(product, type, w);
+      product.notifiedWebhooks.push({
+        type,
+        url: w,
+      });
     });
-    // TODO: Handle syncing with database
+
+    // Update the store with the new product data
+    return this._store.products.edit(product.id, product);
   }
 
   /**
@@ -88,6 +106,10 @@ class Manager {
       this._events.emit(Events.AddMonitorData, existingMonitor.id, data);
       return;
     }
+
+    // TODO: Setup proper subscriptions in datastore instead of pulling proxies everytime!
+    const proxies = await this._store.proxies.browse();
+    this._proxyManager.registerAll(proxies.map(p => p.value));
 
     const { id, openProxy } = await this.setup(data.site.url);
 
