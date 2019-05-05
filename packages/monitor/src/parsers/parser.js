@@ -75,9 +75,8 @@ class Parser {
   /**
    * Construct a new parser
    */
-  constructor(request, site, data, proxy, name) {
+  constructor(request, data, proxy, name) {
     this._request = request;
-    this._site = site;
     this._data = data;
     this._proxy = proxy;
     this._name = name || 'Parser';
@@ -98,7 +97,7 @@ class Parser {
    * Perform Product Matching based on the parse type
    */
   match(products) {
-    let matchedProducts;
+    const matchedProducts = [];
     // TODO: When we support multiple parsing "types", switch based on that.
     this._data.keywords.forEach(pair => {
       const { positive, negative } = pair;
@@ -108,6 +107,8 @@ class Parser {
         matchedProducts.push(matches);
       }
     });
+    console.log(`[DEBUG]: Matched products: ${matchedProducts}`);
+    return matchedProducts;
   }
 }
 
