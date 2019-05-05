@@ -9,6 +9,7 @@ describe('Product (GraphQL)', () => {
   describe('Queries', () => {
     const queryTester = new QuerySchemaTester(ProductType, initialProduct, {
       variants: 'variants { id, size, inStock }',
+      notifiedWebhooks: 'notifiedWebhooks { type, url }',
     });
 
     queryTester.generateTestSuite();
@@ -17,6 +18,7 @@ describe('Product (GraphQL)', () => {
   describe('Mutations', () => {
     const mutationTester = new MutationSchemaTester(ProductInputType, initialProduct, ProductType, {
       variants: 'variants { id, size, inStock }',
+      notifiedWebhooks: 'notifiedWebhooks { type, url }',
     });
     const base = { ...initialProduct };
     delete base.id;
@@ -47,6 +49,12 @@ describe('Product (GraphQL)', () => {
       base,
       [[], [{ ...initialVariant }], null],
       [3, { test: 'test' }, 'test', '', false, true],
+    );
+    mutationTester.generateTestsForKey(
+      'monitorInfoId',
+      base,
+      ['valid', '', null],
+      [3, {}, [], false, true],
     );
   });
 });
