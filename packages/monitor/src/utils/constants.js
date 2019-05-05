@@ -47,10 +47,8 @@ const ManagerEvents = {
   Abort: 'ABORT',
   SendProxy: 'SEND_PROXY',
   AddMonitorData: 'ADD_MONITOR_DATA',
-  RemoveMonitorData: 'REMOTE_MONITOR_DATA',
-  ChangeDelay: 'CHANGE_DELAY',
-  ChangeWebhook: 'CHANGE_WEBHOOK',
-  UpdateKeywords: 'UPDATE_KEYWORDS',
+  RemoveMonitorData: 'REMOVE_MONITOR_DATA',
+  UpdateMonitorData: 'UPDATE_MONITOR_DATA',
 };
 
 const MonitorStates = {

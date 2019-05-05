@@ -10,4 +10,6 @@ export default {
   variants: [],
   price: '',
   timestamp: '',
+  notifiedWebhooks: [],
+  monitorInfoId: '',
 };

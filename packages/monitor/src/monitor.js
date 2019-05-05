@@ -10,10 +10,6 @@ class Monitor {
     return this._state;
   }
 
-  get data() {
-    return this._data;
-  }
-
   get id() {
     return this._id;
   }
@@ -29,6 +25,20 @@ class Monitor {
     this._id = id;
 
     /**
+     * @type {Site} the shared site used by this monitor.
+     */
+    this._site = data.site;
+
+    /**
+     * Delays that should be used for this monitor object
+     * // TODO: This will apply to all future monitorInfo objects that share this
+     * // site even though they may have different delays -- see if we can add better
+     * // support for adjusting the delays
+     */
+    this._errorDelay = data.errorDelay;
+    this._monitorDelay = data.monitorDelay;
+
+    /**
      * @type {List<String>} a list of ids for monitor data objects currently being monitored
      */
     this.monitorIds = [data.id];
@@ -40,13 +50,9 @@ class Monitor {
     this._events = new EventEmitter();
 
     /**
-     * @type {Object}
-     * - site { id, name, url }
-     * - keywords { positive, negative }
-     * - monitorDelay
-     * - errorDelay
+     * @type {List<MonitorInfo>} (see @structures/src/definitions/monitorInfo.js)
      */
-    this._data = data;
+    this._dataGroups = [data];
     this._proxy = proxy;
 
     this._request = request.defaults({
@@ -58,6 +64,9 @@ class Monitor {
     this._state = States.Start;
 
     this._events.on(ManagerEvents.Abort, this._handleAbort, this);
+    this._events.on(ManagerEvents.AddMonitorData, this._handleAddMonitorData, this);
+    this._events.on(ManagerEvents.RemoveMonitorData, this._handleRemoveMonitorData, this);
+    this._events.on(ManagerEvents.UpdateMonitorData, this._handleUpdateMonitorData, this);
   }
 
   async swapProxies() {
@@ -81,84 +90,11 @@ class Monitor {
     });
   }
 
-  // MARK: Event Registration
-  registerForEvent(event, callback) {
-    switch (event) {
-      case MonitorEvents.Status: {
-        this._events.on(MonitorEvents.Status, callback);
-        break;
-      }
-      default:
-        break;
-    }
-  }
-
-  deregisterForEvent(event, callback) {
-    switch (event) {
-      case MonitorEvents.Status: {
-        this._events.removeListener(MonitorEvents.Status, callback);
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  }
-
-  _emitEvent(event, payload = {}) {
-    switch (event) {
-      // Emit supported events on their specific channel
-      case MonitorEvents.Status: {
-        if (payload.status && payload.status !== this._context.status) {
-          this._context.status = payload.status;
-          this._events.emit(event, this._context.id, payload, event);
-        }
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  }
-
-  _handleAbort(id) {
-    if (id !== this._context.id) {
-      return;
-    }
-    this._context.abort = true;
-  }
-
-  _changeDelay(id, newDelay, type) {
-    if (id !== this._context.id) {
-      return;
-    }
-
-    if (type === Delays.Error) {
-      this._context.data.errorDelay = newDelay;
-    } else if (type === Delays.Monitor) {
-      this._context.data.monitorDelay = newDelay;
-    }
-  }
-
-  _changeWebhook(id, hook, type) {
-    if (id !== this._context.id) {
-      return;
-    }
-
-    if (type === Hooks.Discord) {
-      this._context.data.discord = hook;
-    } else if (type === Hooks.Slack) {
-      this._context.data.slack = hook;
-    }
-  }
-
-  _cleanup() {}
-
   async _delay(status) {
-    let timeout = this._data.monitorDelay;
+    let timeout = this._monitorDelay;
     switch (status || 404) {
       case 401: {
-        timeout = this._data.errorDelay;
+        timeout = this._errorDelay;
         break;
       }
       default:
@@ -202,11 +138,15 @@ class Monitor {
   }
 
   _parseAll() {
+    const parserData = {};
+    parserData.keywords = this._dataGroups.map(({ keywords }) => ({ keywords }));
+    parserData.site = this._site;
+
     // Create the parsers and start the async run methods
     const parsers = [
-      new AtomParser(this._request, this._data, this._proxy),
-      new JsonParser(this._request, this._data, this._proxy),
-      new XmlParser(this._request, this._data, this._proxy),
+      new AtomParser(this._request, parserData, this._proxy),
+      new JsonParser(this._request, parserData, this._proxy),
+      new XmlParser(this._request, parserData, this._proxy),
     ].map(p => p.run());
     // Return the winner of the race
     return rfrl(parsers, 'parseAll');
@@ -268,6 +208,42 @@ class Monitor {
     // TODO: Adjust logic to full implement stopping a monitor!
     this._aborted = true;
     return States.Stop;
+  }
+
+  _handleAddMonitorData(_, data) {
+    const existingDataGroup = this._dataGroups.find(d => d.id === data.id);
+    if (!existingDataGroup) {
+      // Only add data group if it is new
+      this._dataGroups.push(data);
+    }
+  }
+
+  _handleRemoveMonitorData(_, data) {
+    // Filter out the monitor infor from the tracked data groups
+    this._dataGroups = this._dataGroups.filter(d => d.id !== data.id);
+  }
+
+  _handleUpdateMonitorData(_, data) {
+    const index = this._dataGroups.findIndex(d => d.id === data.id);
+    if (index === -1) {
+      // data was not found, add it to the list
+      this._dataGroups.push(data);
+    } else {
+      // Since products contains data generated and used by the monitor, we want to
+      // keep this even though the other parts of the monitorInfo object may change.
+      const { products } = this._dataGroups[index];
+      data.products.forEach(p => {
+        if (p.id !== products.id) {
+          // Only push new products that haven't been tracked before
+          products.push(p);
+        }
+      });
+      // Update the reference with the new data
+      this._dataGroups[index] = {
+        ...data,
+        products,
+      };
+    }
   }
 
   async _handleEndState() {

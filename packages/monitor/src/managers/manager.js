@@ -56,11 +56,11 @@ class Manager {
   /**
    * Start a monitor process
    *
-   * This method starts a given store if it has not already been started. The
+   * This method starts a given monitor if it has not already been started. The
    * requisite data is generated (id, open proxy if it is available, etc.) and
    * starts the monitor asynchronously.
    *
-   * If the given store has already started, we attempt to compare
+   * If the given monitor has already started, we attempt to compare
    * data being monitored. One of two cases can happen:
    * 1. We have new keywords that we wish to include, so we create a new monitor process
    * 2. We have similar keywords, so we negate creating the monitor process
@@ -98,6 +98,26 @@ class Manager {
    */
   startAll(monitors) {
     [...monitors].forEach(m => this.start(m));
+  }
+
+  /**
+   * Update existing monitor info
+   * @param {MonitorInfo} data monitor info object to update
+   */
+  update(data) {
+    // Find an existing monitor based on the site
+    const existingMonitor = Object.values(this._monitors).find(s => s.site.url === data.site.url);
+    if (existingMonitor) {
+      if (existingMonitor.monitorIds.includes(data.id)) {
+        // Existing monitor was tracking the data, emit an update event
+        this._events.emit(Events.UpdateMonitorData, existingMonitor.id, data);
+      } else {
+        // Existing monitor was not tracking the data, emit an add event
+        this._events.emit(Events.AddMonitorData, existingMonitor.id, data);
+      }
+    }
+    // Existing monitor doesn't exist, throw an error
+    throw new Error('Failed to update! Data was not previously tracked before.');
   }
 
   /**
@@ -186,8 +206,7 @@ class Manager {
       Events.SendProxy,
       Events.AddMonitorData,
       Events.RemoveMonitorData,
-      Events.ChangeDelay,
-      Events.ChangeWebhook,
+      Events.UpdateMonitorData,
     ].forEach(event => {
       let handler;
       switch (event) {
@@ -233,16 +252,17 @@ class Manager {
   _cleanup(monitor) {
     const handlers = this._handlers[monitor.id];
     delete this._handlers[monitor.id];
-    monitor.deregisterForEvent(Monitor.Events.Status, this.mergeStatusUpdates);
     monitor._events.removeAllListeners();
 
-    monitor._events.removeAllListeners();
-
-    [Events.Abort, Events.SendProxy, Events.AddMonitorData, Events.RemoveMonitorData].forEach(
-      event => {
-        this._events.removeListener(event, handlers[event]);
-      },
-    );
+    [
+      Events.Abort,
+      Events.SendProxy,
+      Events.AddMonitorData,
+      Events.RemoveMonitorData,
+      Events.UpdateMonitorData,
+    ].forEach(event => {
+      this._events.removeListener(event, handlers[event]);
+    });
   }
 
   /**

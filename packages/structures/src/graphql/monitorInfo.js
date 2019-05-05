@@ -48,8 +48,8 @@ export const MonitorInfoType = new GraphQLObjectType({
       description: 'delay (in ms) to wait when error occurs in monitor cycles',
     },
     products: {
-      type: GraphQLNonNull(GraphQLList(ProductType)),
-      description: 'products matched with this monitor info',
+      type: GraphQLList(ProductType),
+      description: 'products matched with this monitor info (optional)',
     },
     webhooks: {
       type: GraphQLNonNull(GraphQLList(SiteType)),

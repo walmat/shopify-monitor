@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 
 import variant from './variant';
+import webhookNotification from './webhookNotification';
 
 // Product Definition
 export default PropTypes.shape({
@@ -27,4 +28,10 @@ export default PropTypes.shape({
 
   // Timestamp when this product was matched
   timestamp: PropTypes.string.isRequired,
+
+  // Webhooks that were notified of this product
+  notifiedWebhooks: PropTypes.arrayOf(webhookNotification).isRequired,
+
+  // The id of the monitor info object that matched this product
+  monitorInfoId: PropTypes.string.isRequired,
 });
