@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@monitor/datastore": "0.1.0",
+    "@monitor/monitor": "1.0.0",
     "@monitor/structures": "0.1.0",
     "cors": "^2.8.5",
     "dotenv": "^7.0.0",
