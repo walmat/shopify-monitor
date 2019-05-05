@@ -34,9 +34,13 @@ class Manager {
   async handleNotifyProduct(productData, type, webhooks) {
     const product = { ...productData };
     try {
-      const existing = await this._store.products.read(product.id);
-      // Update starting point of notified webhooks so we save the data between updates
-      product.notifiedWebhooks = existing.notifiedWebhooks;
+      const existingProducts = await this._store.products.browse();
+      const existingProduct = existingProducts.find(p => p.url === product.url);
+      if (existingProduct) {
+        // Update starting point of notified webhooks so we save the data between updates
+        product.notifiedWebhooks = existingProduct.notifiedWebhooks;
+        product.id = existingProduct.id;
+      }
     } catch (_) {
       // fail silently...
     }
