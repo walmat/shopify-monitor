@@ -1,6 +1,7 @@
 import uuidv4 from 'uuid/v4';
 
 import { MemoryStore, RedisStore, Datasources } from '@monitor/datastore';
+import { Manager } from '@monitor/monitor/src';
 import { initialStates, utils } from '@monitor/structures';
 
 const {
@@ -24,6 +25,8 @@ class Resolver {
     } else {
       this.store = new MemoryStore();
     }
+
+    this._manager = new Manager(this.store);
   }
 
   async browseProducts() {
@@ -284,6 +287,20 @@ class Resolver {
       ...data,
     };
     return this.store.monitorInfoGroups.edit(id, monitorData);
+  }
+
+  async startMonitor(id) {
+    const monitorInfo = await this.store.monitorInfoGroups.read(id);
+    this._manager.start(monitorInfo);
+
+    return true;
+  }
+
+  async stopMonitor(id) {
+    const monitorInfo = await this.store.monitorInfoGroups.read(id);
+    this._manager.stop(monitorInfo);
+
+    return true;
   }
 }
 
