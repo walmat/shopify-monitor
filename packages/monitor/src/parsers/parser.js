@@ -99,6 +99,7 @@ class Parser {
    */
   match(products) {
     let matchedProducts;
+    // TODO: When we support multiple parsing "types", switch based on that.
     this._data.keywords.forEach(pair => {
       const { positive, negative } = pair;
       const matches = matchKeywords(products, { pos: positive, neg: negative });
