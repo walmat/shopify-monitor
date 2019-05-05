@@ -28,4 +28,4 @@ class WebhookManager {
   }
 }
 
-export default WebhookManager;
+module.exports = WebhookManager;

@@ -137,6 +137,7 @@ class Monitor {
   }
 
   static _filterVariants(products) {
+    console.log(products);
     return products.forEach(p => p.variants.filter(v => v.available));
   }
 
@@ -167,17 +168,26 @@ class Monitor {
     // filter out errors
     products = products.filter(p => p.status === 'resolved');
 
-    // filter out duplicates
-    products = products[0].v[0].reduce((first, second) => {
-      return first && first.url && first.url.includes(second.url) ? first : [...first, second];
-    }, []);
+    if (!products.length) {
+      // TODO: handle no products found
+    }
 
-    console.log(`[DEBUG]: PRODUCTS NO DUPLICATES: %j`, products);
+    const productMap = {};
+    products.forEach(result => {
+      result.v.forEach(product => {
+        product.forEach(p => {
+          console.log(p);
+          if (!productMap[p.url]) {
+            productMap[p.url] = p;
+          }
+        });
+      });
+    });
 
+    console.log(productMap);
+    const fullProductInfos = Object.keys(productMap).forEach(p => Parser.getFullProductInfo(p, this._request));
     // get full product info
-    const fullProducts = products.forEach(p => Parser.getFullProductInfo(p));
-
-    console.log(fullProducts);
+    console.log('[DEBUG]: Full info: %j', fullProductInfos);
 
     // TODO:
     // 1. filter out any similar results (based on the url?) _x_ done
@@ -185,7 +195,7 @@ class Monitor {
     // 3. generate variant data for full product data
     // 4. send to manager at this point?
 
-    const variants = Monitor._generateVariants(fullProducts);
+    const variants = Monitor._filterVariants(fullProductInfos);
     console.log(`[DEBUG]: VARIANTS: ${variants}`);
 
     // TODO: Compare all products data with current exising record in DB

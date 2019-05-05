@@ -1,5 +1,9 @@
+const { MemoryStore } = require('@monitor/datastore');
+
 const monitor = require('./src');
 const Discord = require('./src/hooks/discord');
+
+const store = new MemoryStore();
 
 const discord = new Discord(
   'https://discordapp.com/api/webhooks/573205927956578315/-HCPCPGWZZvdQHqckla9U_70APE4h0TWaXwf8LCOa0pYLvd1pd51mW7b43-EGMf7dubH',
@@ -23,7 +27,7 @@ const discord = new Discord(
 
 require('dotenv').config();
 
-const Manager = new monitor.Manager();
+const Manager = new monitor.Manager(store);
 
 const data = {
   id: 1,
