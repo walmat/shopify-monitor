@@ -61,10 +61,9 @@ const MonitorStates = {
 };
 
 const MonitorEvents = {
-  All: 'ALL',
-  Status: 'STATUS',
   SwapProxy: 'SWAP_PROXY',
   ReceiveProxy: 'RECEIVE_PROXY',
+  NotifyProduct: 'NOTIFY_PRODUCT',
 };
 
 const ErrorCodes = {

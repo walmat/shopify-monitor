@@ -94,6 +94,7 @@ class SplitContextManager extends Manager {
         }
         const eventHandlerMap = {
           [MonitorEvents.SwapProxy]: this.handleProxySwap,
+          [MonitorEvents.NotifyProduct]: this.handleNotifyProduct,
         };
 
         const handler = eventHandlerMap[event];
@@ -156,7 +157,7 @@ class SplitContextManager extends Manager {
     delete this._handlers[monitorContext.id];
 
     // Remove message handler
-    monitorContext.on('message', handlers.receiveHandler);
+    monitorContext.removeListener('message', handlers.receiveHandler);
     delete handlers.receiveHandler;
 
     // Remove manager event handlers

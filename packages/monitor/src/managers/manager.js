@@ -3,6 +3,7 @@ const shortid = require('shortid');
 
 const Monitor = require('../monitor');
 const ProxyManager = require('../proxy');
+const WebhookManager = require('../hooks/manager');
 const { Events } = require('../utils/constants').Manager;
 
 class Manager {
@@ -12,6 +13,7 @@ class Manager {
     this._monitors = {};
     this._handlers = {};
     this._proxyManager = new ProxyManager();
+    this._webhookManager = new WebhookManager();
   }
 
   /**
@@ -25,6 +27,13 @@ class Manager {
     const { site } = this._monitors[id];
     const newProxy = await this._proxyManager.swap(proxyId, site, shouldBan);
     this._events.emit(Events.SendProxy, id, newProxy);
+  }
+
+  async handleNotifyProduct(product, type, webhooks) {
+    webhooks.forEach(w => {
+      this._webhookManager.sendWebhook(product, type, w);
+    });
+    // TODO: Handle syncing with database
   }
 
   /**
@@ -242,6 +251,7 @@ class Manager {
     this._handlers[monitor.id] = handlers;
 
     monitor._events.on(Monitor.Events.SwapProxy, this.handleProxySwap, this);
+    monitor._events.on(Monitor.Events.NotifyProduct, this.handleNotifyProduct, this);
   }
 
   /**
