@@ -108,7 +108,7 @@ class Parser {
         matchedProducts.push(matches);
       }
     });
-    // console.log(`[DEBUG]: %s Matched products: %j`, this._name, matchedProducts);
+    console.log(`[DEBUG]: %s Matched products: %j`, this._name, matchedProducts);
     return matchedProducts;
   }
 }

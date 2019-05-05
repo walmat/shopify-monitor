@@ -3,7 +3,7 @@ const request = require('request-promise');
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
 const { delay, reflect } = require('./utils/constants').Utils;
 const { States, Events: MonitorEvents, ErrorCodes } = require('./utils/constants').Monitor;
-const { AtomParser, JsonParser, XmlParser } = require('./parsers');
+const { AtomParser, JsonParser, XmlParser, Parser } = require('./parsers');
 
 class Monitor {
   get state() {
@@ -132,14 +132,13 @@ class Monitor {
     return this._delay(delayStatus || 404);
   }
 
-  static _generateVariants(products) {
-    // TODO: is there a better way to do this?
+  static _filterVariants(products) {
     return products.forEach(p => p.variants.filter(v => v.available));
   }
 
   _parseAll() {
     const parserData = {};
-    parserData.keywords = this._dataGroups.map(({ keywords }) => ({ keywords }));
+    parserData.keywords = this._dataGroups.map(({ keywords }) => keywords);
     parserData.site = this._site;
 
     // Create the parsers and start the async run methods
@@ -164,15 +163,25 @@ class Monitor {
     // filter out errors
     products = products.filter(p => p.status === 'resolved');
 
-    console.log('[DEBUG]: Filtered errors: %j', products);
+    // filter out duplicates
+    products = products[0].v[0].reduce((first, second) => {
+      return first && first.url && first.url.includes(second.url) ? first : [...first, second];
+    }, []);
+
+    console.log(`[DEBUG]: PRODUCTS NO DUPLICATES: %j`, products);
+
+    // get full product info
+    const fullProducts = products.forEach(p => Parser.getFullProductInfo(p));
+
+    console.log(fullProducts);
 
     // TODO:
-    // 1. filter out any similar results
-    // 2. get full product data for remaining results
+    // 1. filter out any similar results (based on the url?) _x_ done
+    // 2. get full product data for remaining results _x_ done
     // 3. generate variant data for full product data
     // 4. send to manager at this point?
 
-    const variants = Monitor._generateVariants(products);
+    const variants = Monitor._generateVariants(fullProducts);
     console.log(`[DEBUG]: VARIANTS: ${variants}`);
 
     // TODO: Compare all products data with current exising record in DB

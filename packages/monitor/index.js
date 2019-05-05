@@ -33,13 +33,11 @@ const data = {
     name: '12AM Run',
     url: 'https://www.unknwn.com',
   },
-  keywords: [
-    {
-      positive: ['jordan', 'retro'],
-      negative: [],
-      value: '+yeezy,+boucle',
-    },
-  ],
+  keywords: {
+    positive: ['air', 'jordan', 'retro', '1', 'iv'],
+    negative: [],
+    value: '+yeezy,+boucle',
+  },
   status: '',
   monitorDelay: 1500,
   errorDelay: 1500,
