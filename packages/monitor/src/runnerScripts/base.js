@@ -175,7 +175,7 @@ class MonitorContextTransformer {
     });
 
     // Forward Monitor Events to the Main Process
-    [MonitorEvents.SwapProxy].forEach(event => {
+    [MonitorEvents.SwapProxy, MonitorEvents.NotifyProduct].forEach(event => {
       monitor._events.on(event, (...args) => {
         this.send({
           target: 'main',
