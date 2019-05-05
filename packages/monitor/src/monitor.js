@@ -41,13 +41,9 @@ class Monitor {
     this._events = new EventEmitter();
 
     /**
-     * @type {Object}
-     * - site { id, name, url }
-     * - keywords { positive, negative }
-     * - monitorDelay
-     * - errorDelay
+     * @type {List<MonitorInfo>} (see @structures/src/definitions/monitorInfo.js)
      */
-    this._data = data;
+    this._dataGroups = [data];
     this._proxy = proxy;
 
     this._request = request.defaults({
