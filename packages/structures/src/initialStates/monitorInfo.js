@@ -12,4 +12,6 @@ export default {
   status: null,
   monitorDelay: initialSettings.defaultMonitorDelay,
   errorDelay: initialSettings.defaultErrorDelay,
+  products: [],
+  webhooks: [],
 };

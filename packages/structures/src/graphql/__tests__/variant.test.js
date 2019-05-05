@@ -16,5 +16,6 @@ describe('Variant (GraphQL)', () => {
 
     mutationTester.generateTestsForKey('id', {}, ['test', '', null], [3, {}, [], true, false]);
     mutationTester.generateTestsForKey('size', {}, ['test', '', null], [3, {}, [], true, false]);
+    mutationTester.generateTestsForKey('inStock', {}, [false, true, null], [3, {}, [], '', 'test']);
   });
 });

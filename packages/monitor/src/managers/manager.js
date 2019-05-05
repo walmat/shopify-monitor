@@ -1,9 +1,9 @@
 const EventEmitter = require('eventemitter3');
 const shortid = require('shortid');
 
-const Monitor = require('./monitor');
-const ProxyManager = require('./proxy');
-const { Events } = require('./utils/constants').Manager;
+const Monitor = require('../monitor');
+const ProxyManager = require('../proxy');
+const { Events } = require('../utils/constants').Manager;
 
 class Manager {
   constructor() {
@@ -67,10 +67,19 @@ class Manager {
    * @param {Object} data - mapped from `monitorInfo` in `packages/structures/src/definitions/monitorInfo.js`
    */
   async start(data) {
-    const alreadyStarted = Object.values(this._monitors).find(s => s.id === data.id);
-    if (alreadyStarted) {
+    // Find an existing monitor based on the site
+    const existingMonitor = Object.values(this._monitors).find(s => s.site.url === data.site.url);
+    if (existingMonitor) {
+      if (existingMonitor.monitorIds.includes(data.id)) {
+        // Existing monitor also includes the same data id, so we're already monitoring
+        return;
+      }
+
+      // Emit an event to send the data to the monitor
+      this._events.emit(Events.AddMonitorData, existingMonitor.id, data);
       return;
     }
+
     const { id, openProxy } = await this.setup(data.site.url);
 
     this._start([id, data, openProxy]).then(() => {
@@ -101,17 +110,26 @@ class Manager {
    * This method does nothing if the given process has already stopped or
    * if it was never started.
    *
-   * @param {Object} data the task to stop
+   * @param {Object} data the monitor data to stop
    */
-  stop(data) {
-    const id = Object.keys(this._monitors).find(k => this._monitors[k].id === data.id);
-    if (!id) {
+  stop(data, options = {}) {
+    const existingMonitor = Object.values(this._monitors).find(s => s.site.url === data.site.url);
+    if (!existingMonitor || !existingMonitor.monitorIds.includes(data.id)) {
+      // No monitor was found or existing monitor did not include the monitor data,
+      // so we don't need to do anything
       return null;
     }
 
-    // Send abort signal
-    this._events.emit(Events.Abort, id);
-    return id;
+    if (existingMonitor.monitorIds.length === 1 || options.force) {
+      // Existing monitor includes the monitor data, and there is only one left -- we can abort the
+      // monitor OR the force option is passed
+      this._events.emit(Events.Abort, existingMonitor.id);
+    } else {
+      // Existing monitor includes the monitor data, as well as other monitor data objects, so we should
+      // remove the given monitor data, but not abort the whole monitor
+      this._events.emit(Events.RemoveMonitorData, existingMonitor.id, data);
+    }
+    return existingMonitor.id;
   }
 
   /**
@@ -128,17 +146,19 @@ class Manager {
     let monitorsToStop = monitors;
 
     if (force) {
-      monitorsToStop = Object.values(this._monitors).map(({ id }) => ({ id }));
+      // Choose one monitor data group from each monitor so we don't try to force stop
+      // a single monitor process multiple times
+      monitorsToStop = Object.values(this._monitors).map(({ monitorIds }) => monitorIds[0]);
     }
-    return [...monitorsToStop].map(m => this.stop(m, { wait }));
+    return [...monitorsToStop].map(m => this.stop(m, { wait, force }));
   }
 
   /**
    * Check if a monitor is running
    * @param {Object} monitor the monitor to check
    */
-  isRunning(monitor) {
-    return !!this._monitors.find(m => m.id === monitor.id);
+  isRunning(monitorData) {
+    return !!this._monitors.find(m => m.monitorIds.includes(monitorData.id));
   }
 
   /**
@@ -147,9 +167,10 @@ class Manager {
    * @param {Object} monitor - monitor object
    */
   _setup(monitor) {
+    const mId = monitor.id;
     const handlerGenerator = (event, sideEffects) => (id, ...params) => {
-      if (id === monitor.id || id === 'ALL') {
-        const args = [monitor.id, ...params];
+      if (id === mId || id === 'ALL') {
+        const args = [mId, ...params];
         if (sideEffects) {
           sideEffects.apply(this, args);
         }
@@ -160,22 +181,35 @@ class Manager {
     const handlers = {};
 
     // Generate Handlers for each event
-    [Events.Abort, Events.SendProxy, Events.ChangeDelay, Events.ChangeWebhook].forEach(event => {
+    [
+      Events.Abort,
+      Events.SendProxy,
+      Events.AddMonitorData,
+      Events.RemoveMonitorData,
+      Events.ChangeDelay,
+      Events.ChangeWebhook,
+    ].forEach(event => {
       let handler;
       switch (event) {
-        case Events.Abort: {
-          handler = id => {
-            if (id === monitor.id || id === 'ALL') {
-              monitor._handleAbort(monitor.id);
-            }
-          };
-          break;
-        }
         case Events.SendProxy: {
           const sideEffects = (id, proxy) => {
             this._monitors[id].proxy = proxy;
           };
           handler = handlerGenerator(Monitor.Events.ReceiveProxy, sideEffects);
+          break;
+        }
+        case Events.AddMonitorData: {
+          const sideEffects = (id, data) => {
+            this._monitors[id].monitorIds.push(data.id);
+          };
+          handler = handlerGenerator(Events.AddMonitorData, sideEffects);
+          break;
+        }
+        case Events.RemoveMonitorData: {
+          const sideEffects = (id, data) => {
+            this._monitors[id].monitorIds = this._monitors[id].monitorIds.filter(id !== data.id);
+          };
+          handler = handlerGenerator(Events.RemoveMonitorData, sideEffects);
           break;
         }
         default: {
@@ -202,9 +236,13 @@ class Manager {
     monitor.deregisterForEvent(Monitor.Events.Status, this.mergeStatusUpdates);
     monitor._events.removeAllListeners();
 
-    [Events.Abort, Events.SendProxy, Events.ChangeDelay, Events.ChangeWebhook].forEach(event => {
-      this._events.removeListener(event, handlers[event]);
-    });
+    monitor._events.removeAllListeners();
+
+    [Events.Abort, Events.SendProxy, Events.AddMonitorData, Events.RemoveMonitorData].forEach(
+      event => {
+        this._events.removeListener(event, handlers[event]);
+      },
+    );
   }
 
   /**
@@ -213,20 +251,7 @@ class Manager {
    * @param {List} param0 [monitor id, monitor data, proxy]
    */
   async _start([id, data, proxy]) {
-    const { site, keywords } = data;
-
-    // see if we currently have a monitor running that is on that site
-    let monitor = Object.values(this._monitors).find(m => m.data.site.url === site.url);
-
-    if (!monitor) {
-      // if we didn't find an existing monitor, setup a new one
-      monitor = new Monitor(id, data, proxy);
-      console.log('created new monitor: %j', monitor.id);
-    } else {
-      monitor = this._monitors[monitor.id];
-      monitor._events.emit(Events.UpdateKeywords, keywords);
-      return;
-    }
+    const monitor = new Monitor(id, data, proxy);
 
     // monitor.site = monitor.site.url;
     this._monitors[id] = monitor;

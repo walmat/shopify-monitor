@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 
 import site from './site';
-import products from './products';
+import product from './product';
 import keywordInfo from './keywordInfo';
 
 // Monitor Info Definition
@@ -31,5 +31,8 @@ export default PropTypes.shape({
 
   // Array of products that are found for that monitor package
   // TODO: find a way to sync this with the database when starting/stopping monitors
-  products: products.isRequired,
+  products: PropTypes.arrayOf(product).isRequired,
+
+  // Array of webhooks that should be notified when matched products change
+  webhooks: PropTypes.arrayOf(site).isRequired,
 });

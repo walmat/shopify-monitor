@@ -8,7 +8,7 @@ import MutationSchemaTester from './__utils__/mutationSchemaTester';
 describe('Product (GraphQL)', () => {
   describe('Queries', () => {
     const queryTester = new QuerySchemaTester(ProductType, initialProduct, {
-      variants: 'variants { id, size }',
+      variants: 'variants { id, size, inStock }',
     });
 
     queryTester.generateTestSuite();
@@ -16,7 +16,7 @@ describe('Product (GraphQL)', () => {
 
   describe('Mutations', () => {
     const mutationTester = new MutationSchemaTester(ProductInputType, initialProduct, ProductType, {
-      variants: 'variants { id, size }',
+      variants: 'variants { id, size, inStock }',
     });
     const base = { ...initialProduct };
     delete base.id;

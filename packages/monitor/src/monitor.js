@@ -30,10 +30,22 @@ class Monitor {
     this._site = site;
 
     /**
-     * @type {Array<Object>}
-     * - keywords [{ positive, negative }, { positive, negative}]
-     * - monitorDelay: Number
-     * - errorDelay: Number
+     * @type {List<String>} a list of ids for monitor data objects currently being monitored
+     */
+    this.monitorIds = [data.id];
+
+    /**
+     * Create a new event emitter to handle communication with the manager, even through
+     * split contexts
+     */
+    this._events = new EventEmitter();
+
+    /**
+     * @type {Object}
+     * - site { id, name, url }
+     * - keywords { positive, negative }
+     * - monitorDelay
+     * - errorDelay
      */
     this._data = data;
     this._proxy = proxy;
@@ -46,17 +58,12 @@ class Monitor {
     this.stop = false;
     this._state = States.Start;
 
-    this._events = new EventEmitter();
+    /**
+     * @type {String} parse type for the data that is passed through
+     */
+    this._parseType = getParseType(data.keywords, data.site);
 
-    this._events.on(ManagerEvents.UpdateKeywords, this.handleUpdateKeywords, this);
-    // this._events.on(ManagerEvents.)
-  }
-
-  async handleUpdateKeywords(id, keywords) {
-    if (id === this.id) {
-      // TODO: Test this!
-      this.data.keywords.push({ ...keywords });
-    }
+    this._events.on(ManagerEvents.Abort, this._handleAbort, this);
   }
 
   async swapProxies() {
@@ -78,6 +85,46 @@ class Monitor {
       }, 10000); // TODO: Make this a variable delay?
       this._events.once(MonitorEvents.ReceiveProxy, proxyHandler);
     });
+  }
+
+  // MARK: Event Registration
+  registerForEvent(event, callback) {
+    switch (event) {
+      case MonitorEvents.Status: {
+        this._events.on(MonitorEvents.Status, callback);
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  deregisterForEvent(event, callback) {
+    switch (event) {
+      case MonitorEvents.Status: {
+        this._events.removeListener(MonitorEvents.Status, callback);
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
+
+  _emitEvent(event, payload = {}) {
+    switch (event) {
+      // Emit supported events on their specific channel
+      case MonitorEvents.Status: {
+        if (payload.status && payload.status !== this._context.status) {
+          this._context.status = payload.status;
+          this._events.emit(event, this._context.id, payload, event);
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
   }
 
   _handleAbort(id) {
@@ -236,6 +283,11 @@ class Monitor {
       // TODO: handle proxy swapping errors
     }
     return this._prevState;
+  }
+
+  _handleAbort() {
+    // TODO: Adjust logic to full implement stopping a monitor!
+    this.aborted = true;
   }
 
   async _handleEndState() {
