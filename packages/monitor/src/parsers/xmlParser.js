@@ -1,5 +1,5 @@
 const Parser = require('./parser');
-const { ParseType, convertToJson } = require('../utils/parse');
+const { convertToJson } = require('../utils/parse');
 const { format, userAgent } = require('../utils/constants').Utils;
 
 class XmlParser extends Parser {
@@ -9,18 +9,18 @@ class XmlParser extends Parser {
    * @param {Object} data the data we want to parse and match
    * @param {Proxy} the proxy to use when making requests
    */
-  constructor(request, site, data, proxy) {
-    super(request, site, data, proxy, 'XmlParser');
+  constructor(request, data, proxy) {
+    super(request, data, proxy, 'XmlParser');
   }
 
   async run() {
-    const { url } = this._site;
+    const { url } = this._data.site;
     let responseJson;
     try {
       const response = await this._request({
         method: 'GET',
-        uri: `${this._data.site.url}/sitemap_products_1.xml?from=1&to=299999999999999999`,
-        proxy: format(this._proxy) || undefined,
+        uri: `${url}/sitemap_products_1.xml?from=1&to=299999999999999999`,
+        proxy: format(this._proxy),
         rejectUnauthorized: false,
         json: false,
         simple: true,
@@ -42,15 +42,16 @@ class XmlParser extends Parser {
       title: item['image:image'][0]['image:title'][0],
       handle: item.loc[0].substring(item.loc[0].lastIndexOf('/')),
     }));
-    const matchedProduct = super.match(products);
+    const matchedProducts = super.match(products);
+    console.log(matchedProducts);
 
-    if (!matchedProduct) {
+    if (!matchedProducts) {
       throw new Error('unable to match the product');
     }
-    let fullProductInfo = null;
+    const fullProductsInfo = [];
     try {
-      await matchedProducts.forEach(async product => {
-        const info = await Parser.getFullProductInfo(product.url, this._request);
+      matchedProducts.forEach(product => {
+        const info = Parser.getFullProductInfo(product.url, this._request);
 
         if (!info) {
           // TODO: should we throw here?

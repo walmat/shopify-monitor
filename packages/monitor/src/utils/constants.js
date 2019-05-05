@@ -66,6 +66,14 @@ const MonitorEvents = {
   ReceiveProxy: 'RECEIVE_PROXY',
 };
 
+const ErrorCodes = {
+  ProductNotFound: 'PRODUCT_MISSING',
+  ProductNotLive: 'PRODUCT_NOT_LIVE',
+  VariantsNotAvailable: 'VARIANTS_NOT_AVAILABLE',
+  VariantsNotMatched: 'VARIANTS_NOT_MATCHED',
+  RestockingNotSupported: 'RESTOCK_NOT_SUPPORTED',
+};
+
 module.exports = {
   Manager: {
     Events: ManagerEvents,
@@ -73,6 +81,7 @@ module.exports = {
   Monitor: {
     States: MonitorStates,
     Events: MonitorEvents,
+    ErrorCodes,
   },
   Utils: {
     userAgent,

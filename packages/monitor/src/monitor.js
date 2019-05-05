@@ -2,16 +2,12 @@ const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
 const { delay, rfrl } = require('./utils/constants').Utils;
-const { States, Events: MonitorEvents } = require('./utils/constants').Monitor;
+const { States, Events: MonitorEvents, ErrorCodes } = require('./utils/constants').Monitor;
 const { AtomParser, JsonParser, XmlParser } = require('./parsers');
 
 class Monitor {
   get state() {
     return this._state;
-  }
-
-  get data() {
-    return this._data;
   }
 
   get id() {
@@ -27,7 +23,20 @@ class Monitor {
      * @type {String} the id of the monitor process
      */
     this._id = id;
+
+    /**
+     * @type {Site} the shared site used by this monitor.
+     */
     this._site = data.site;
+
+    /**
+     * Delays that should be used for this monitor object
+     * // TODO: This will apply to all future monitorInfo objects that share this
+     * // site even though they may have different delays -- see if we can add better
+     * // support for adjusting the delays
+     */
+    this._errorDelay = data.errorDelay;
+    this._monitorDelay = data.monitorDelay;
 
     /**
      * @type {List<String>} a list of ids for monitor data objects currently being monitored
@@ -82,10 +91,10 @@ class Monitor {
   }
 
   async _delay(status) {
-    let timeout = this._context.data.monitorDelay;
+    let timeout = this._monitorDelay;
     switch (status || 404) {
       case 401: {
-        timeout = this._context.data.errorDelay;
+        timeout = this._errorDelay;
         break;
       }
       default:
@@ -128,29 +137,36 @@ class Monitor {
     return products.forEach(p => p.variants.filter(v => v.available));
   }
 
-  _parseAll(keywords) {
+  _parseAll() {
+    const parserData = {};
+    parserData.keywords = this._dataGroups.map(({ keywords }) => ({ keywords }));
+    parserData.site = this._site;
+
     // Create the parsers and start the async run methods
     const parsers = [
-      new AtomParser(this.request, this.site, keywords, this.proxy),
-      new JsonParser(this.request, this.site, keywords, this.proxy),
-      new XmlParser(this.request, this.site, keywords, this.proxy),
+      new AtomParser(this._request, parserData, this._proxy),
+      new JsonParser(this._request, parserData, this._proxy),
+      new XmlParser(this._request, parserData, this._proxy),
     ].map(p => p.run());
     // Return the winner of the race
     return rfrl(parsers, 'parseAll');
   }
 
-  async _monitorKeywords(keywords) {
+  async _monitorKeywords() {
     let products;
     try {
       // Try parsing all files and wait for the first response
-      products = await this._parseAll(keywords);
+      products = await this._parseAll();
     } catch (errors) {
+      console.log(errors);
       return this._handleParsingErrors(errors);
     }
 
-    console.log(products);
+    console.log(`[DEBUG]: PRODUCTS: ${products}`);
 
     const variants = Monitor._generateVariants(products);
+    console.log(`[DEBUG]: VARIANTS: ${variants}`);
+
     // TODO: Compare all products data with current exising record in DB
     /**
      * NEXT STATE
@@ -160,27 +176,9 @@ class Monitor {
   }
 
   async _handleParse() {
-    // TODO: loop over each "pair" of keywords
-    this.data.keywords.forEach(pair => this._monitorKeywords(pair));
-    // let nextState;
-    // switch (this.parseType) {
-    //   case ParseType.Url: {
-    //     ({ nextState } = await this._monitorUrl());
-    //     break;
-    //   }
-    //   case ParseType.Keywords: {
-    //     ({ nextState } = await this._monitorKeywords());
-    //     break;
-    //   }
-    //   case ParseType.Special: {
-    //     ({ nextState } = await this._monitorSpecial());
-    //     break;
-    //   }
-    //   default: {
-    //     return { nextState: States.Stop };
-    //   }
-    // }
-    // return { nextState };
+    const { nextState } = await this._monitorKeywords();
+    console.log(`[DEBUG]: next state from handle parse: ${nextState}`);
+    return nextState;
   }
 
   async _handleSwapProxy() {
@@ -208,7 +206,8 @@ class Monitor {
 
   _handleAbort() {
     // TODO: Adjust logic to full implement stopping a monitor!
-    this.aborted = true;
+    this._aborted = true;
+    return States.Stop;
   }
 
   _handleAddMonitorData(_, data) {
@@ -258,12 +257,10 @@ class Monitor {
 
     const StateMap = {
       [States.Parse]: this._handleParse,
-      [States.Compare]: this._handleCompare,
-      [States.Notify]: this._handleNotify,
       [States.SwapProxies]: this._handleSwapProxy,
+      [States.Abort]: this._handleAbort,
       [States.Error]: this._handleEndState,
       [States.Stop]: this._handleEndState,
-      [States.Abort]: this._handleEndState,
     };
 
     const handler = StateMap[state] || defaultHandler;
@@ -284,7 +281,7 @@ class Monitor {
     console.log('[DEBUG]: Transitioning to state: %s', nextState);
 
     if (this._state !== nextState) {
-      this._prevState = this.state;
+      this._prevState = this._state;
       this._state = nextState;
     }
 
