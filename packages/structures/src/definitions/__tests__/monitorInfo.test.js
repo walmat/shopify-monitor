@@ -1,12 +1,13 @@
 import monitorInfoSpec from '../monitorInfo';
-import initialmonitorInfo from '../../initialStates/monitorInfo';
+import initialMonitorInfo from '../../initialStates/monitorInfo';
 import initialSite from '../../initialStates/site';
 import initialKeywordInfo from '../../initialStates/keywordInfo';
+import initialProduct from '../../initialStates/product';
 
 import SpecTester from './__utils__/specTester';
 
 describe('monitor info spec', () => {
-  const specTester = new SpecTester(monitorInfoSpec, initialmonitorInfo);
+  const specTester = new SpecTester(monitorInfoSpec, initialMonitorInfo);
 
   specTester.testKey(['', 'test'], [null, undefined, false, 8, [], {}], 'id');
   specTester.testKey([null, undefined, 0, 80], [false, 'test', [], {}], 'index');
@@ -20,5 +21,6 @@ describe('monitor info spec', () => {
     'keywords',
   );
   specTester.testKey([initialSite], [null, undefined, false, 80, 'test', [], {}], 'site');
+  specTester.testKey([[], [initialProduct], null], [false, 80, 'test', '', {}], 'products');
   specTester.testKey([[], [initialSite]], [null, undefined, false, 80, 'test', '', {}], 'webhooks');
 });
