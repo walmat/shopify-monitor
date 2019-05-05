@@ -78,46 +78,6 @@ class Monitor {
     });
   }
 
-  // MARK: Event Registration
-  registerForEvent(event, callback) {
-    switch (event) {
-      case MonitorEvents.Status: {
-        this._events.on(MonitorEvents.Status, callback);
-        break;
-      }
-      default:
-        break;
-    }
-  }
-
-  deregisterForEvent(event, callback) {
-    switch (event) {
-      case MonitorEvents.Status: {
-        this._events.removeListener(MonitorEvents.Status, callback);
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  }
-
-  _emitEvent(event, payload = {}) {
-    switch (event) {
-      // Emit supported events on their specific channel
-      case MonitorEvents.Status: {
-        if (payload.status && payload.status !== this._context.status) {
-          this._context.status = payload.status;
-          this._events.emit(event, this._context.id, payload, event);
-        }
-        break;
-      }
-      default: {
-        break;
-      }
-    }
-  }
-
   async _delay(status) {
     let timeout = this._context.data.monitorDelay;
     switch (status || 404) {
