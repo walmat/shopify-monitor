@@ -38,7 +38,7 @@ class Parser {
             const json = JSON.parse(res);
 
             return {
-              title: json.title,
+              name: json.title,
               url: productUrl,
               price: `${json.price}`.endsWith('00')
                 ? `${json.price}`.slice(0, -2)
@@ -53,6 +53,7 @@ class Parser {
                 ],
                 [],
               ),
+              timestamp: new Date(),
             };
           },
           error => {
@@ -68,7 +69,7 @@ class Parser {
             const json = JSON.parse(res);
 
             return {
-              title: json.title,
+              name: json.title,
               url: productUrl,
               price: `${json.offers[0].price}`.endsWith('00')
                 ? `${json.offers[0].price}`.slice(0, -2)
@@ -83,6 +84,7 @@ class Parser {
                 ],
                 [],
               ),
+              timestamp: new Date(),
             };
           },
           error => {
@@ -125,11 +127,11 @@ class Parser {
     const matchedProducts = [];
     // TODO: When we support multiple parsing "types", switch based on that.
     this._data.keywords.forEach(pair => {
-      const { positive, negative } = pair;
+      const { positive, negative, monitorInfoId } = pair;
       const matches = matchKeywords(products, { pos: positive, neg: negative });
 
       if (matches) {
-        matchedProducts.push(matches);
+        matchedProducts.push({ monitorInfoId, matches });
       }
     });
     return matchedProducts;

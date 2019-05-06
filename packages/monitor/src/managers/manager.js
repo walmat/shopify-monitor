@@ -31,11 +31,7 @@ class Manager {
     this._events.emit(Events.SendProxy, id, newProxy);
   }
 
-  async handleNotifyProducts(products, type = 'Restock', site, webhooks) {
-    Object.values(products).forEach(p => this.handleNotifyProduct(p, type, site, webhooks));
-  }
-
-  async handleNotifyProduct(product, type, site, webhooks) {
+  async handleNotifyProduct(product, type, webhooks) {
     const _product = { ...product };
     _product.notifiedWebhooks = product.notifiedWebhooks || [];
     try {
@@ -52,7 +48,7 @@ class Manager {
 
     webhooks.forEach(w => {
       // Send a webhook and add an entry for the webhook in our notified list
-      this._webhookManager.sendWebhook(_product, type, site, w);
+      this._webhookManager.sendWebhook(_product, type, w);
       _product.notifiedWebhooks.push({
         type,
         url: w,
@@ -282,7 +278,7 @@ class Manager {
     this._handlers[monitor.id] = handlers;
 
     monitor._events.on(Monitor.Events.SwapProxy, this.handleProxySwap, this);
-    monitor._events.on(Monitor.Events.NotifyProduct, this.handleNotifyProducts, this);
+    monitor._events.on(Monitor.Events.NotifyProduct, this.handleNotifyProduct, this);
   }
 
   /**

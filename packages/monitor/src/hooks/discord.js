@@ -15,14 +15,14 @@ class Discord {
   }
 
   build({
-    product: { title: productName, url: productUrl, image, price },
-    store: { name: storeName, url: storeUrl },
+    product: { name: productName, url: productUrl, image, price },
+    site: { name: siteName, url: siteUrl },
     variants,
     type,
   }) {
     if (this.hook) {
       const sizes = variants.length
-        ? variants.map(v => `[${v.name}](${storeUrl}/cart/${v.id}:1)`)
+        ? variants.map(v => `[${v.name}](${siteUrl}/cart/${v.id}:1)`)
         : 'OOS';
       let quickTasks = ''; // has to be a string in order to keep on same line
       Object.entries(QuickTasks).forEach(([key, value]) => {
@@ -36,7 +36,7 @@ class Discord {
       });
 
       const embed = new RichEmbed()
-        .setAuthor(storeName, null, storeUrl)
+        .setAuthor(siteName, null, siteUrl)
         .setColor(this.colorMap[type])
         .setTitle(productName)
         .setURL(productUrl)

@@ -1,6 +1,7 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
-const { flatten } = require('underscore');
+const { productDefn: Product } = require('@monitor/structures').definitions;
+
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
 const { delay, reflect } = require('./utils/constants').Utils;
 const { States, Events: MonitorEvents, ErrorCodes } = require('./utils/constants').Monitor;
@@ -150,9 +151,9 @@ class Monitor {
     const productMap = {};
     _products.forEach(result => {
       result.v.forEach(product => {
-        product.forEach(p => {
+        product.matches.forEach(p => {
           if (p && p.url && !productMap[p.url]) {
-            productMap[p.url] = p;
+            productMap[p.url] = { monitorInfoId: product.monitorInfoId, product: p };
           }
         });
       });
@@ -160,15 +161,35 @@ class Monitor {
 
     // get full product data for remaining results
     const inStockProducts = await Promise.all(
-      Object.keys(productMap).map(p => (async () => Parser.getFullProductInfo(p, this._request))()),
+      Object.values(productMap).map(({ monitorInfoId, product: p }) =>
+        (async () => {
+          const product = await Parser.getFullProductInfo(p.url, this._request);
+          return {
+            monitorInfoId,
+            product,
+          };
+        })(),
+      ),
     );
 
-    return { inStockProducts };
+    const productMapping = {};
+    inStockProducts.forEach(prods => {
+      const { monitorInfoId, products: p } = prods;
+      if (productMapping[monitorInfoId]) {
+        return productMapping[monitorInfoId].push(p);
+      }
+      return productMapping[monitorInfoId] = [p];
+    });
+
+    return { productMapping };
   }
 
   _parseAll() {
     const parserData = {};
-    parserData.keywords = this._dataGroups.map(({ keywords }) => keywords);
+    parserData.keywords = this._dataGroups.map(({ id, keywords }) => ({
+      ...keywords,
+      monitorInfoId: id,
+    }));
     parserData.site = this._site;
 
     // Create the parsers and start the async run methods
@@ -195,15 +216,33 @@ class Monitor {
       return { nextState: States.Parse };
     }
 
-    const { inStockProducts } = await this._filter(products);
+    const { productMapping } = await this._filter(products);
 
     // send to manager at this point?
-    if (inStockProducts) {
-      // emit event to send new data to manager
-      const hooks = flatten(this._dataGroups.map(({ webhooks }) => webhooks.map(({ url }) => url)));
-      // TODO: Compare stock data here
-      // TODO: update monitor's product storage (if needed)
-      this._events.emit(MonitorEvents.NotifyProduct, inStockProducts, 'test', this._site, hooks);
+    if (productMapping) {
+      Object.entries(productMapping).forEach((monitorInfoId, val) => {
+        const monitorInfo = this._dataGroups.find(d => d.id === monitorInfoId);
+
+        val.forEach(p => {
+          const newProduct = new Product({
+            ...p,
+            id: '',
+            site: this._site,
+            monitorInfoId,
+          });
+          if (monitorInfo.products.find(existing => existing.url === newProduct.url)) {
+            // check stock data
+          } else {
+            // it's a newly found product, emit the event
+            this._events.emit(
+              MonitorEvents.NotifyProduct,
+              newProduct,
+              'Release',
+              monitorInfo.webhooks,
+            );
+          }
+        });
+      });
     }
 
     await delay(this._monitorDelay);

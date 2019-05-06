@@ -6,18 +6,18 @@ class WebhookManager {
     this.clients = {};
   }
 
-  sendWebhook(productData, type, site, webhookUrl) {
+  sendWebhook(productData, type, webhookUrl) {
     if (!this.clients[webhookUrl]) {
       // TODO: Support slack hooks as well
       this.clients[webhookUrl] = new Discord(webhookUrl);
     }
 
-    const { title, price, image, url, variants } = productData;
+    const { title, site, price, image, url, variants } = productData;
     const product = { title, url, image, price };
 
     this.clients[webhookUrl].build({
       product,
-      store: site,
+      site,
       variants,
       type,
     });
