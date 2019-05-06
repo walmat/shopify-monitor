@@ -44,7 +44,7 @@ class Discord {
         .addField('Type', type, true)
         .addField('Price', price, true)
         .addField('Size(s)', sizes, false)
-        .addField('Quick Tasks', quickTasks.trim(), true)
+        .addField('Quick Tasks', quickTasks.trim(), false)
         .addField('Full Size Run', 'Coming soon!')
         .setTimestamp(timestamp)
         .setFooter('Shopify Monitor | @FlexEngines', 'https://i.imgur.com/5kOFBB3.png');

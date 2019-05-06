@@ -53,10 +53,7 @@ class Parser {
                     ? [
                         {
                           id,
-                          name: title.replace(
-                            /[^0-9|.|XS|S|M|L|XL|XXL|XSM|SM|MD|LG|XLG|XXLG|xs|s|m|l|xl|xxl|small|medium|large|xlarge|xxlarge]/g,
-                            '',
-                          ),
+                          name: title,
                         },
                       ]
                     : []),
@@ -94,10 +91,7 @@ class Parser {
                     ? [
                         {
                           id,
-                          name: title.replace(
-                            /[^0-9|.|XS|S|M|L|XL|XXL|XSM|SM|MD|LG|XLG|XXLG|xs|s|m|l|xl|xxl|small|medium|large|xlarge|xxlarge]/g,
-                            '',
-                          ),
+                          name: title,
                         },
                       ]
                     : []),

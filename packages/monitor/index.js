@@ -28,16 +28,16 @@ const data = {
   index: 1,
   site: {
     id: 1,
-    name: '12AM Run',
-    url: 'https://www.12amrun.com',
+    name: 'Haven Shop',
+    url: 'https://shop.havenshop.com',
   },
   keywords: {
-    positive: ['washed', 'stone', 'grey'],
+    positive: ['Chuck', 'Egret', '70'],
     negative: [],
     value: '+yeezy,+boucle',
   },
   status: '',
-  monitorDelay: 1500,
+  monitorDelay: 10000,
   errorDelay: 1500,
   webhooks: [
     {
