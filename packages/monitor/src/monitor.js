@@ -1,5 +1,6 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
+const { flatten } = require('underscore');
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
 const { delay, reflect } = require('./utils/constants').Utils;
 const { States, Events: MonitorEvents, ErrorCodes } = require('./utils/constants').Monitor;
@@ -135,7 +136,7 @@ class Monitor {
     return this._delay(delayStatus || 404);
   }
 
-  static async _filter(products) {
+  async _filter(products) {
     let _products = products;
     // filter out errors
     _products = _products.filter(p => p.status === 'resolved');
@@ -158,14 +159,11 @@ class Monitor {
     });
 
     // get full product data for remaining results
-    const fullProductInfos = await Promise.all(
+    const inStockProducts = await Promise.all(
       Object.keys(productMap).map(p => (async () => Parser.getFullProductInfo(p, this._request))()),
     );
 
-    // TODO: filter out errors here?
-    const inStockProducts = fullProductInfos.forEach(p => p.variants.filter(v => v.available));
-
-    return { nextState: States.Parse, inStockProducts };
+    return { inStockProducts };
   }
 
   _parseAll() {
@@ -197,15 +195,18 @@ class Monitor {
       return { nextState: States.Parse };
     }
 
-    const { inStockProducts } = await Monitor._filter(products);
+    const { inStockProducts } = await this._filter(products);
 
     // send to manager at this point?
     if (inStockProducts) {
       // emit event to send new data to manager
-      this._events.emit(MonitorEvents.SendProducts, inStockProducts);
-      // TODO: update monitor's product storage
+      const hooks = flatten(this._dataGroups.map(({ webhooks }) => webhooks.map(({ url }) => url)));
+      // TODO: Compare stock data here
+      // TODO: update monitor's product storage (if needed)
+      this._events.emit(MonitorEvents.NotifyProduct, inStockProducts, 'test', this._site, hooks);
     }
 
+    await delay(this._monitorDelay);
     return { nextState: States.Parse };
   }
 
@@ -216,22 +217,17 @@ class Monitor {
   }
 
   async _handleSwapProxy() {
-    const {
-      proxy: oldProxy,
-      data: { errorDelay },
-    } = this._context;
-
     try {
       const newProxy = await this.swapProxies();
 
       // Proxy is fine, update the references
       if (newProxy) {
-        this.proxy = newProxy;
-        oldProxy.proxy = newProxy.proxy;
+        const { proxy } = newProxy;
+        this._proxy = proxy;
         this.shouldBanProxy = 0; // reset ban flag
         return this._prevState;
       }
-      await delay(errorDelay);
+      await delay(this._errorDelay);
     } catch (err) {
       // TODO: handle proxy swapping errors
     }

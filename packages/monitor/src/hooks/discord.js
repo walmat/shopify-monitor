@@ -7,22 +7,23 @@ class Discord {
       const [, , , , , id, token] = hook.split('/');
       this.hook = new WebhookClient(id, token);
     }
+
+    this.colorMap = {
+      Restock: 16167182,
+      test: 16167182,
+    };
   }
 
   build({
-    product: { name: productName, url: productUrl, image, price },
+    product: { title: productName, url: productUrl, image, price },
     store: { name: storeName, url: storeUrl },
-    stock,
+    variants,
     type,
   }) {
     if (this.hook) {
-      const sizes = stock.map((s, i) => {
-        const size = `[${s.name}](${storeUrl}/cart/${s.variant}:1)`;
-        if (i % 2 === 0) {
-          return `${size}\t\t`;
-        }
-        return `${size}\n`;
-      });
+      const sizes = variants.length
+        ? variants.map(v => `[${v.name}](${storeUrl}/cart/${v.id}:1)`)
+        : 'OOS';
       let quickTasks = ''; // has to be a string in order to keep on same line
       Object.entries(QuickTasks).forEach(([key, value]) => {
         if (key.indexOf('Eve') > -1) {
@@ -36,7 +37,7 @@ class Discord {
 
       const embed = new RichEmbed()
         .setAuthor(storeName, null, storeUrl)
-        .setColor(16167182)
+        .setColor(this.colorMap[type])
         .setTitle(productName)
         .setURL(productUrl)
         .setThumbnail(image)
@@ -46,7 +47,7 @@ class Discord {
         .addField('Quick Tasks', quickTasks.trim(), true)
         .addField('Full Size Run', 'Coming soon!')
         .setTimestamp()
-        .setFooter('Shopify Monitor | @nebulabots', 'https://i.imgur.com/KelstZo.png');
+        .setFooter('Shopify Monitor | @FlexEngines', 'https://i.imgur.com/5kOFBB3.png');
 
       return this.hook.send(embed);
     }

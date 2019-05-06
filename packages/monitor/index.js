@@ -1,13 +1,7 @@
 const { MemoryStore } = require('@monitor/datastore');
-
 const monitor = require('./src');
-const Discord = require('./src/hooks/discord');
 
 const store = new MemoryStore();
-
-const discord = new Discord(
-  'https://discordapp.com/api/webhooks/573205927956578315/-HCPCPGWZZvdQHqckla9U_70APE4h0TWaXwf8LCOa0pYLvd1pd51mW7b43-EGMf7dubH',
-);
 
 // discord.build({
 //   product: {
@@ -34,17 +28,31 @@ const data = {
   index: 1,
   site: {
     id: 1,
-    name: '12AM Run',
-    url: 'https://www.unknwn.com',
+    name: 'Kith',
+    url: 'https://www.kith.com',
   },
   keywords: {
-    positive: ['air', 'jordan', 'retro', '1', 'iv'],
+    positive: ['yeezy'],
     negative: [],
     value: '+yeezy,+boucle',
   },
   status: '',
   monitorDelay: 1500,
   errorDelay: 1500,
+  webhooks: [
+    {
+      id: '1',
+      name: 'Test Customer',
+      url:
+        'https://discordapp.com/api/webhooks/573205927956578315/-HCPCPGWZZvdQHqckla9U_70APE4h0TWaXwf8LCOa0pYLvd1pd51mW7b43-EGMf7dubH',
+    },
+    // {
+    //   id: 2,
+    //   name: 'Flex Engines',
+    //   url:
+    //     'https://discordapp.com/api/webhooks/575047329174913027/SRqDuCC5UolVcI-e_hMo8Gyj7ZOj6wRcyxiik643joFVokHmi_m5yd-KCAwiIrzOKHz-',
+    // },
+  ],
 };
 
 Manager.start(data);

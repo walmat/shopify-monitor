@@ -42,6 +42,7 @@ class XmlParser extends Parser {
       title: item['image:image'][0]['image:title'][0],
       handle: item.loc[0].substring(item.loc[0].lastIndexOf('/')),
     }));
+
     const matchedProducts = super.match(products);
 
     if (!matchedProducts.length) {

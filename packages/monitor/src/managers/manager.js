@@ -31,15 +31,20 @@ class Manager {
     this._events.emit(Events.SendProxy, id, newProxy);
   }
 
-  async handleNotifyProduct(productData, type, webhooks) {
-    const product = { ...productData };
+  async handleNotifyProducts(products, type = 'Restock', site, webhooks) {
+    Object.values(products).forEach(p => this.handleNotifyProduct(p, type, site, webhooks));
+  }
+
+  async handleNotifyProduct(product, type, site, webhooks) {
+    const _product = { ...product };
+    _product.notifiedWebhooks = product.notifiedWebhooks || [];
     try {
       const existingProducts = await this._store.products.browse();
-      const existingProduct = existingProducts.find(p => p.url === product.url);
+      const existingProduct = existingProducts.find(p => p.url === _product.url);
       if (existingProduct) {
         // Update starting point of notified webhooks so we save the data between updates
-        product.notifiedWebhooks = existingProduct.notifiedWebhooks;
-        product.id = existingProduct.id;
+        _product.notifiedWebhooks = existingProduct.notifiedWebhooks;
+        _product.id = existingProduct.id;
       }
     } catch (_) {
       // fail silently...
@@ -47,15 +52,15 @@ class Manager {
 
     webhooks.forEach(w => {
       // Send a webhook and add an entry for the webhook in our notified list
-      this._webhookManager.sendWebhook(product, type, w);
-      product.notifiedWebhooks.push({
+      this._webhookManager.sendWebhook(_product, type, site, w);
+      _product.notifiedWebhooks.push({
         type,
         url: w,
       });
     });
 
     // Update the store with the new product data
-    return this._store.products.edit(product.id, product);
+    return this._store.products.edit(product.id, _product);
   }
 
   /**
@@ -277,7 +282,7 @@ class Manager {
     this._handlers[monitor.id] = handlers;
 
     monitor._events.on(Monitor.Events.SwapProxy, this.handleProxySwap, this);
-    monitor._events.on(Monitor.Events.NotifyProduct, this.handleNotifyProduct, this);
+    monitor._events.on(Monitor.Events.NotifyProduct, this.handleNotifyProducts, this);
   }
 
   /**

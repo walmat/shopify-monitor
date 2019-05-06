@@ -33,9 +33,28 @@ class Parser {
     return rfrl(
       [
         genRequestPromise(`${productUrl}.js`).then(
-          res =>
+          res => {
             // {productUrl}.js contains the format we need -- just return it
-            JSON.parse(res),
+            const json = JSON.parse(res);
+
+            return {
+              title: json.title,
+              url: productUrl,
+              price: `${json.price}`.endsWith('00')
+                ? `${json.price}`.slice(0, -2)
+                : `${json.price}`,
+              image: json.featured_image.startsWith('//')
+                ? `https://${json.featured_image.slice(2, json.featured_image.length)}`
+                : json.featured_image,
+              variants: json.variants.reduce(
+                (result, { id, title, available }) => [
+                  ...result,
+                  ...(available ? [{ id, name: title.replace(/[^0-9|.]/g, '') }] : []),
+                ],
+                [],
+              ),
+            };
+          },
           error => {
             // Error occured, return a rejection with the status code attached
             const err = new Error(error.message);
@@ -50,15 +69,20 @@ class Parser {
 
             return {
               title: json.title,
-              vendor: json.provider,
-              handle: json.product_id,
-              featured_image: json.thumbnail_url,
-              variants: json.offers.map(offer => ({
-                title: offer.title,
-                id: offer.offer_id,
-                price: `${offer.price}`,
-                available: offer.in_stock || false,
-              })),
+              url: productUrl,
+              price: `${json.offers[0].price}`.endsWith('00')
+                ? `${json.offers[0].price}`.slice(0, -2)
+                : `${json.offers[0].price}`,
+              image: json.thumbnail_url.startsWith('//')
+                ? `https://${json.thumbnail_url.slice(2, json.thumbnail_url.length)}`
+                : json.thumbnail_url,
+              variants: json.offers.reduce(
+                (result, { offer_id: id, title, in_stock: available }) => [
+                  ...result,
+                  ...(available ? [{ id, name: title.replace(/[^0-9|.]/g, '') }] : []),
+                ],
+                [],
+              ),
             };
           },
           error => {
