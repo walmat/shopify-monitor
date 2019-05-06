@@ -12,8 +12,8 @@ class WebhookManager {
       this.clients[webhookUrl] = new Discord(webhookUrl);
     }
 
-    const { title, site, price, image, url, variants } = productData;
-    const product = { title, url, image, price };
+    const { name, site, price, image, url, variants } = productData;
+    const product = { name, url, image, price };
 
     this.clients[webhookUrl].build({
       product,
