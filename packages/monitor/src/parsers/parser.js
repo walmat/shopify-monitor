@@ -16,7 +16,6 @@ class Parser {
    * @param {String} productUrl
    */
   static getFullProductInfo(productUrl, request) {
-    console.log(productUrl);
     const genRequestPromise = uri =>
       request({
         method: 'GET',
@@ -53,6 +52,7 @@ class Parser {
               title: json.title,
               vendor: json.provider,
               handle: json.product_id,
+              featured_image: json.thumbnail_url,
               variants: json.offers.map(offer => ({
                 title: offer.title,
                 id: offer.offer_id,

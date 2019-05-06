@@ -60,7 +60,6 @@ class Monitor {
       jar: request.jar(),
     });
 
-    this.stop = false;
     this._state = States.Start;
 
     this._events.on(ManagerEvents.Abort, this._handleAbort, this);
@@ -136,9 +135,37 @@ class Monitor {
     return this._delay(delayStatus || 404);
   }
 
-  static _filterVariants(products) {
-    console.log(products);
-    return products.forEach(p => p.variants.filter(v => v.available));
+  static async _filter(products) {
+    let _products = products;
+    // filter out errors
+    _products = _products.filter(p => p.status === 'resolved');
+    // no parsing resolve correctly, let's retry..
+    if (!_products.length) {
+      return { nextState: States.Parse };
+    }
+
+    // TODO: There has to be a better way to do this.. :/
+    // filter out any similar results (based on the url?)
+    const productMap = {};
+    _products.forEach(result => {
+      result.v.forEach(product => {
+        product.forEach(p => {
+          if (p && p.url && !productMap[p.url]) {
+            productMap[p.url] = p;
+          }
+        });
+      });
+    });
+
+    // get full product data for remaining results
+    const fullProductInfos = await Promise.all(
+      Object.keys(productMap).map(p => (async () => Parser.getFullProductInfo(p, this._request))()),
+    );
+
+    // TODO: filter out errors here?
+    const inStockProducts = fullProductInfos.forEach(p => p.variants.filter(v => v.available));
+
+    return { nextState: States.Parse, inStockProducts };
   }
 
   _parseAll() {
@@ -159,51 +186,26 @@ class Monitor {
   async _monitorKeywords() {
     let products;
     try {
-      // Try parsing all files and wait for the first response
+      // Try parsing all files and wait for all responses (either rejected or resolved)
       products = await this._parseAll();
     } catch (errors) {
       return this._handleParsingErrors(errors);
     }
 
-    // filter out errors
-    products = products.filter(p => p.status === 'resolved');
-
+    // if we received no response with no errors somehow, let's try again.
     if (!products.length) {
-      // TODO: handle no products found
+      return { nextState: States.Parse };
     }
 
-    const productMap = {};
-    products.forEach(result => {
-      result.v.forEach(product => {
-        product.forEach(p => {
-          console.log(p);
-          if (!productMap[p.url]) {
-            productMap[p.url] = p;
-          }
-        });
-      });
-    });
+    const { inStockProducts } = await Monitor._filter(products);
 
-    console.log(productMap);
-    const fullProductInfos = Object.keys(productMap).forEach(p => Parser.getFullProductInfo(p, this._request));
-    // get full product info
-    console.log('[DEBUG]: Full info: %j', fullProductInfos);
-
-    // TODO:
-    // 1. filter out any similar results (based on the url?) _x_ done
-    // 2. get full product data for remaining results _x_ done
-    // 3. generate variant data for full product data
     // 4. send to manager at this point?
+    if (inStockProducts) {
+      // emit event to send new data to manager
+      this._events.emit();
+    }
 
-    const variants = Monitor._filterVariants(fullProductInfos);
-    console.log(`[DEBUG]: VARIANTS: ${variants}`);
-
-    // TODO: Compare all products data with current exising record in DB
-    /**
-     * NEXT STATE
-     *  -> If change, continue to send hooks && update db
-     *  -> If no change, loop back to parse again
-     */
+    return { nextState: States.Parse };
   }
 
   async _handleParse() {
@@ -236,8 +238,6 @@ class Monitor {
   }
 
   _handleAbort() {
-    // TODO: Adjust logic to full implement stopping a monitor!
-    this._aborted = true;
     return States.Stop;
   }
 
@@ -277,10 +277,6 @@ class Monitor {
     }
   }
 
-  async _handleEndState() {
-    return States.Stop;
-  }
-
   async _handleState(state) {
     async function defaultHandler() {
       throw new Error('Reached Unknown State!');
@@ -290,8 +286,12 @@ class Monitor {
       [States.Parse]: this._handleParse,
       [States.SwapProxies]: this._handleSwapProxy,
       [States.Abort]: this._handleAbort,
-      [States.Error]: this._handleEndState,
-      [States.Stop]: this._handleEndState,
+      [States.Error]: () => {
+        return States.Stop;
+      },
+      [States.Stop]: () => {
+        return States.Stop;
+      },
     };
 
     const handler = StateMap[state] || defaultHandler;
