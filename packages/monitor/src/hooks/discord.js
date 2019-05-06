@@ -1,5 +1,5 @@
 const { RichEmbed, WebhookClient } = require('discord.js');
-const QuickTasks = require('./_assets/quick_tasks.json');
+const QuickTasks = require('../../_assets/quick_tasks.json');
 
 class Discord {
   constructor(hook) {
