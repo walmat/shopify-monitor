@@ -199,10 +199,11 @@ class Monitor {
 
     const { inStockProducts } = await Monitor._filter(products);
 
-    // 4. send to manager at this point?
+    // send to manager at this point?
     if (inStockProducts) {
       // emit event to send new data to manager
-      this._events.emit();
+      this._events.emit(MonitorEvents.SendProducts, inStockProducts);
+      // TODO: update monitor's product storage
     }
 
     return { nextState: States.Parse };
@@ -237,6 +238,7 @@ class Monitor {
     return this._prevState;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   _handleAbort() {
     return States.Stop;
   }
