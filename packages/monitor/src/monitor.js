@@ -235,6 +235,7 @@ class Monitor {
             // check stock data
           } else {
             // it's a newly found product, emit the event
+            monitorInfo.products.push(newProduct);
             this._events.emit(
               MonitorEvents.NotifyProduct,
               newProduct,
