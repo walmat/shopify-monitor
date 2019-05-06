@@ -49,7 +49,17 @@ class Parser {
               variants: json.variants.reduce(
                 (result, { id, title, available }) => [
                   ...result,
-                  ...(available ? [{ id, name: title.replace(/[^0-9|.]/g, '') }] : []),
+                  ...(available
+                    ? [
+                        {
+                          id,
+                          name: title.replace(
+                            /[^0-9|.|XS|S|M|L|XL|XXL|XSM|SM|MD|LG|XLG|XXLG|xs|s|m|l|xl|xxl|small|medium|large|xlarge|xxlarge]/g,
+                            '',
+                          ),
+                        },
+                      ]
+                    : []),
                 ],
                 [],
               ),
@@ -80,7 +90,17 @@ class Parser {
               variants: json.offers.reduce(
                 (result, { offer_id: id, title, in_stock: available }) => [
                   ...result,
-                  ...(available ? [{ id, name: title.replace(/[^0-9|.]/g, '') }] : []),
+                  ...(available
+                    ? [
+                        {
+                          id,
+                          name: title.replace(
+                            /[^0-9|.|XS|S|M|L|XL|XXL|XSM|SM|MD|LG|XLG|XXLG|xs|s|m|l|xl|xxl|small|medium|large|xlarge|xxlarge]/g,
+                            '',
+                          ),
+                        },
+                      ]
+                    : []),
                 ],
                 [],
               ),

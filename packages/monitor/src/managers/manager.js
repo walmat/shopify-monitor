@@ -48,10 +48,10 @@ class Manager {
 
     webhooks.forEach(w => {
       // Send a webhook and add an entry for the webhook in our notified list
-      this._webhookManager.sendWebhook(_product, type, w);
+      this._webhookManager.sendWebhook(_product, type, w.url);
       _product.notifiedWebhooks.push({
         type,
-        url: w,
+        url: w.url,
       });
     });
 

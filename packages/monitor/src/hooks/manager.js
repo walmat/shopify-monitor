@@ -13,6 +13,7 @@ class WebhookManager {
     }
 
     const { name, site, price, image, url, variants } = productData;
+
     const product = { name, url, image, price };
 
     this.clients[webhookUrl].build({

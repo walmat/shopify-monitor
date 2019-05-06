@@ -24,15 +24,15 @@ require('dotenv').config();
 const Manager = new monitor.Manager(store);
 
 const data = {
-  id: 1,
+  id: '1',
   index: 1,
   site: {
     id: 1,
-    name: 'Kith',
-    url: 'https://www.kith.com',
+    name: '12AM Run',
+    url: 'https://www.12amrun.com',
   },
   keywords: {
-    positive: ['yeezy'],
+    positive: ['washed', 'stone', 'grey'],
     negative: [],
     value: '+yeezy,+boucle',
   },
@@ -53,6 +53,7 @@ const data = {
     //     'https://discordapp.com/api/webhooks/575047329174913027/SRqDuCC5UolVcI-e_hMo8Gyj7ZOj6wRcyxiik643joFVokHmi_m5yd-KCAwiIrzOKHz-',
     // },
   ],
+  products: [],
 };
 
 Manager.start(data);

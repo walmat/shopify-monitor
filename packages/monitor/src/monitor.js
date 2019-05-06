@@ -182,8 +182,6 @@ class Monitor {
       }
     });
 
-    console.log(productMapping);
-
     return productMapping;
   }
 
@@ -223,7 +221,7 @@ class Monitor {
 
     // send to manager at this point?
     if (productMapping) {
-      Object.entries(productMapping).forEach((monitorInfoId, val) => {
+      Object.entries(productMapping).forEach(([monitorInfoId, val]) => {
         const monitorInfo = this._dataGroups.find(d => d.id === monitorInfoId);
 
         val.forEach(p => {
