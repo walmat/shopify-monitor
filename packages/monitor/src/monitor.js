@@ -1,11 +1,11 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
-const { productDefn: Product } = require('@monitor/structures').definitions;
 
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
 const { delay, reflect } = require('./utils/constants').Utils;
 const { States, Events: MonitorEvents, ErrorCodes } = require('./utils/constants').Monitor;
 const { AtomParser, JsonParser, XmlParser, Parser } = require('./parsers');
+const Product = require('./product');
 
 class Monitor {
   get state() {
@@ -174,14 +174,17 @@ class Monitor {
 
     const productMapping = {};
     inStockProducts.forEach(prods => {
-      const { monitorInfoId, products: p } = prods;
+      const { monitorInfoId, product } = prods;
       if (productMapping[monitorInfoId]) {
-        return productMapping[monitorInfoId].push(p);
+        productMapping[monitorInfoId].push(product);
+      } else {
+        productMapping[monitorInfoId] = [product];
       }
-      return productMapping[monitorInfoId] = [p];
     });
 
-    return { productMapping };
+    console.log(productMapping);
+
+    return productMapping;
   }
 
   _parseAll() {
@@ -216,7 +219,7 @@ class Monitor {
       return { nextState: States.Parse };
     }
 
-    const { productMapping } = await this._filter(products);
+    const productMapping = await this._filter(products);
 
     // send to manager at this point?
     if (productMapping) {

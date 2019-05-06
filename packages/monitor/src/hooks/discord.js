@@ -15,7 +15,7 @@ class Discord {
   }
 
   build({
-    product: { name: productName, url: productUrl, image, price },
+    product: { name: productName, url: productUrl, image, price, timestamp },
     site: { name: siteName, url: siteUrl },
     variants,
     type,
@@ -46,7 +46,7 @@ class Discord {
         .addField('Size(s)', sizes, false)
         .addField('Quick Tasks', quickTasks.trim(), true)
         .addField('Full Size Run', 'Coming soon!')
-        .setTimestamp()
+        .setTimestamp(timestamp)
         .setFooter('Shopify Monitor | @FlexEngines', 'https://i.imgur.com/5kOFBB3.png');
 
       return this.hook.send(embed);

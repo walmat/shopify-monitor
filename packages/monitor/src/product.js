@@ -1,10 +1,14 @@
 class Product {
-  get site() {
-    return this._site;
+  get id() {
+    return this._id;
   }
 
   get url() {
     return this._url;
+  }
+
+  get site() {
+    return this._site;
   }
 
   get name() {
@@ -27,14 +31,36 @@ class Product {
     return this._timestamp;
   }
 
-  constructor(site, url, name, image, variants, price) {
-    this._site = site;
+  get notifiedWebhooks() {
+    return this._notifiedWebhooks;
+  }
+
+  get monitorInfoId() {
+    return this._monitorInfoId;
+  }
+
+  constructor({
+    id,
+    url,
+    site,
+    name,
+    image,
+    variants,
+    price,
+    timestamp,
+    notifiedWebhooks,
+    monitorInfoId,
+  }) {
+    this._id = id;
     this._url = url;
+    this._site = site;
     this._name = name;
     this._image = image;
     this._variants = variants;
     this._price = price;
-    this._timestamp = new Date();
+    this._timestamp = timestamp;
+    this._notifiedWebhooks = notifiedWebhooks;
+    this._monitorInfoId = monitorInfoId;
   }
 }
 module.exports = Product;
