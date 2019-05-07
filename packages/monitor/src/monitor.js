@@ -111,7 +111,6 @@ class Monitor {
   }
 
   async _handleParsingErrors(errors) {
-    console.log(errors);
     let delayStatus;
     let ban = true; // assume we have a softban
     let hardBan = false; // assume we don't have a hardban
@@ -164,6 +163,7 @@ class Monitor {
     const inStockProducts = await Promise.all(
       Object.values(productMap).map(({ monitorInfoId, product: p }) =>
         (async () => {
+          // TODO: handle request errors here?
           const product = await Parser.getFullProductInfo(p.url, this._request);
           return {
             monitorInfoId,
@@ -210,7 +210,6 @@ class Monitor {
       // Try parsing all files and wait for all responses (either rejected or resolved)
       products = await this._parseAll();
     } catch (errors) {
-      console.log(errors);
       return this._handleParsingErrors(errors);
     }
 
@@ -233,10 +232,22 @@ class Monitor {
             site: this._site,
             monitorInfoId,
           });
-          if (monitorInfo.products.find(existing => existing.url === newProduct.url)) {
-            // check stock data
+
+          const oldProduct = monitorInfo.products.find(existing => existing.url === newProduct.url);
+
+          if (oldProduct && newProduct.variants && newProduct.variants.length) {
+            // push greater stock changes to the products list
+            if (oldProduct.variants && oldProduct.variants.length < newProduct.variants.length) {
+              this._events.emit(
+                MonitorEvents.NotifyProduct,
+                newProduct,
+                'Release',
+                monitorInfo.webhooks,
+              );
+              monitorInfo.products.push(newProduct);
+            }
           } else {
-            // it's a newly found product, emit the event
+            // it's a newly found product or out of stock event, post it immediately
             this._events.emit(
               MonitorEvents.NotifyProduct,
               newProduct,
