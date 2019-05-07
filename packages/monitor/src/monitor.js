@@ -167,9 +167,8 @@ class Monitor {
     const inStockProducts = await Promise.all(
       Object.values(productMap).map(({ monitorInfoId, product: p }) =>
         (async () => {
-          // TODO: we need a way to swap proxies midway here? or something...
+          // TODO: we need a way to swap proxies midway here? or something a bit nicer
           const product = await Parser.getFullProductInfo(p.url, this._currency, this._request);
-
           return {
             monitorInfoId,
             product,

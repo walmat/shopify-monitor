@@ -7,11 +7,6 @@ class Discord {
       const [, , , , , id, token] = hook.split('/');
       this.hook = new WebhookClient(id, token);
     }
-
-    this.colorMap = {
-      Restock: 16167182,
-      Release: 16167182,
-    };
   }
 
   build({
@@ -35,9 +30,10 @@ class Discord {
         }
       });
 
+      // TODO: .catch() any errors from quickTasks.length > 1024
       const embed = new RichEmbed()
         .setAuthor(siteName, null, siteUrl)
-        .setColor(this.colorMap[type])
+        .setColor(16167182)
         .setTitle(productName)
         .setURL(productUrl)
         .setThumbnail(image)
