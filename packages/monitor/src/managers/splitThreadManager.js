@@ -5,7 +5,7 @@ const { Worker } = require('worker_threads');
 const SplitContextManager = require('./splitContextManager');
 
 class ThreadContext {
-  constuctor(mId, data, proxy) {
+  constructor(mId, data, proxy) {
     this.id = mId;
     this.monitorIds = [data.id];
     this.site = data.site;

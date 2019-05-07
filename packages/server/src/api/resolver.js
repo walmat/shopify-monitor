@@ -1,7 +1,7 @@
 import uuidv4 from 'uuid/v4';
 
 import { MemoryStore, RedisStore, Datasources } from '@monitor/datastore';
-import { Manager } from '@monitor/monitor/src';
+import { Manager, SplitProcessManager, SplitThreadManager } from '@monitor/monitor';
 import { initialStates, utils } from '@monitor/structures';
 
 const {
@@ -26,7 +26,19 @@ class Resolver {
       this.store = new MemoryStore();
     }
 
-    this._manager = new Manager(this.store);
+    switch (process.env.MONITOR_MANAGER_TYPE) {
+      case 'process': {
+        this._manager = new SplitProcessManager(this.store);
+        break;
+      }
+      case 'thread': {
+        this._manager = new SplitThreadManager(this.store);
+        break;
+      }
+      default: {
+        this._manager = new Manager(this.store);
+      }
+    }
   }
 
   async browseProducts() {
