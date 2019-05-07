@@ -48,7 +48,7 @@ class Discord {
         .setTimestamp(timestamp)
         .setFooter('Shopify Monitor | @FlexEngines', 'https://i.imgur.com/5kOFBB3.png');
 
-      return this.hook.send(embed);
+      return this.hook.send(embed).catch(() => {});
     }
     return null;
   }

@@ -141,6 +141,7 @@ class Monitor {
   async _filter(products) {
     // filter out errors
     const _products = products.filter(p => p.status === 'resolved');
+    console.log(`[DEBUG]: %d filtered product resolved`, _products.length);
 
     // no parsing resolve correctly, let's retry..
     if (!_products.length) {
@@ -163,8 +164,8 @@ class Monitor {
     const inStockProducts = await Promise.all(
       Object.values(productMap).map(({ monitorInfoId, product: p }) =>
         (async () => {
-          // TODO: handle request errors here?
           const product = await Parser.getFullProductInfo(p.url, this._request);
+          // TODO: More error handling here
           return {
             monitorInfoId,
             product,
@@ -210,15 +211,21 @@ class Monitor {
       // Try parsing all files and wait for all responses (either rejected or resolved)
       products = await this._parseAll();
     } catch (errors) {
+      console.log(`[DEBUG]: parse all errors: %j`, errors);
       return this._handleParsingErrors(errors);
     }
 
     // if we received no response with no errors somehow, let's try again.
     if (!products.length) {
+      console.log(`[DEBUG]: no products matched`);
       return { nextState: States.Parse };
     }
 
+    console.log(`[DEBUG]: %d products matched`, products.length);
+
     const productMapping = await this._filter(products);
+
+    console.log(`[DEBUG]: %d products after filtering`, Object.values(productMapping).length);
 
     // send to manager at this point?
     if (productMapping) {
@@ -228,7 +235,6 @@ class Monitor {
         val.forEach(p => {
           const newProduct = new Product({
             ...p,
-            id: '',
             site: this._site,
             monitorInfoId,
           });
@@ -236,6 +242,11 @@ class Monitor {
           const oldProduct = monitorInfo.products.find(existing => existing.url === newProduct.url);
 
           if (oldProduct && newProduct.variants && newProduct.variants.length) {
+            console.log(
+              `[DEBUG]: %d old variants, %d new variants`,
+              oldProduct.variants.length,
+              newProduct.variants.length,
+            );
             // push greater stock changes to the products list
             if (oldProduct.variants && oldProduct.variants.length < newProduct.variants.length) {
               this._events.emit(
@@ -259,8 +270,9 @@ class Monitor {
         });
       });
     }
-
+    console.log(`[DEBUG]: Waiting %d ms`, this._monitorDelay);
     await delay(this._monitorDelay);
+    console.log(`[DEBUG]: Continuing monitor...`);
     return { nextState: States.Parse };
   }
 
