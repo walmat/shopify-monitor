@@ -15,7 +15,7 @@ class Parser {
    *
    * @param {String} productUrl
    */
-  static getFullProductInfo(productUrl, request) {
+  static getFullProductInfo(productUrl, currency, request) {
     const genRequestPromise = uri =>
       request({
         method: 'GET',
@@ -41,7 +41,7 @@ class Parser {
               name: json.title,
               url: productUrl,
               price: `${json.price}`.endsWith('00')
-                ? `${json.price}`.slice(0, -2)
+                ? `${`${json.price}`.slice(0, -2)} ${currency}`
                 : `${json.price}`,
               image: json.featured_image.startsWith('//')
                 ? `https://${json.featured_image.slice(2, json.featured_image.length)}`
@@ -79,7 +79,7 @@ class Parser {
               name: json.title,
               url: productUrl,
               price: `${json.offers[0].price}`.endsWith('00')
-                ? `${json.offers[0].price}`.slice(0, -2)
+                ? `${`${json.offers[0].price}`.slice(0, -2)} ${currency}`
                 : `${json.offers[0].price}`,
               image: json.thumbnail_url.startsWith('//')
                 ? `https://${json.thumbnail_url.slice(2, json.thumbnail_url.length)}`

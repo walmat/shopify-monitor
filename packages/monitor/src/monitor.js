@@ -2,7 +2,7 @@ const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
 
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
-const { delay, reflect } = require('./utils/constants').Utils;
+const { delay, reflect, getCurrencyForSite } = require('./utils/constants').Utils;
 const { States, Events: MonitorEvents, ErrorCodes } = require('./utils/constants').Monitor;
 const { AtomParser, JsonParser, XmlParser, Parser } = require('./parsers');
 const Product = require('./product');
@@ -58,9 +58,12 @@ class Monitor {
     this._proxy = proxy;
 
     this._request = request.defaults({
+      family: 4,
       timeout: 20000,
       jar: request.jar(),
     });
+
+    this._currency = getCurrencyForSite(data.site);
 
     this._state = States.Start;
 
@@ -122,11 +125,11 @@ class Monitor {
         // status is neither 403, 429, 430, so set ban to false
         ban = false;
       }
-      if (!delayStatus && (status === ErrorCodes.VariantsNotAvailable || status >= 400)) {
+      if (!delayStatus && status >= 400) {
         delayStatus = status; // find the first error that is either a product not found or 4xx response
       }
     });
-    console.log(ban, hardBan);
+    console.log(`[DEBUG]: Hard Banned?: %j Soft Banned?: %j`, hardBan, ban);
     if (ban || hardBan) {
       // we can assume that it's a soft ban by default since it's either ban || hardBan
       const shouldBan = hardBan ? 2 : 1;
@@ -164,8 +167,9 @@ class Monitor {
     const inStockProducts = await Promise.all(
       Object.values(productMap).map(({ monitorInfoId, product: p }) =>
         (async () => {
-          const product = await Parser.getFullProductInfo(p.url, this._request);
-          // TODO: More error handling here
+          // TODO: we need a way to swap proxies midway here? or something...
+          const product = await Parser.getFullProductInfo(p.url, this._currency, this._request);
+
           return {
             monitorInfoId,
             product,

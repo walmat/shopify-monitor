@@ -1,8 +1,9 @@
 const { rfrl } = require('./rfrl');
 const { reflect } = require('./reflect');
+const { getCurrencyForSite } = require('./currency');
 
 const userAgent =
-  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_4) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.133 Safari/537.36';
+  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_13_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.86 Safari/537.36';
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -90,5 +91,6 @@ module.exports = {
     format,
     rfrl,
     reflect,
+    getCurrencyForSite,
   },
 };
