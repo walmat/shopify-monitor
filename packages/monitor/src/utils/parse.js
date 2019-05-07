@@ -205,9 +205,9 @@ function matchKeywords(products, keywords, fil, returnAll = true) {
       return filtered;
     }
     if (returnAll) {
-      return filterAndLimit(matches, 'updated_at', 0, this._logger);
+      return filterAndLimit(matches, 'updated_at', 0);
     }
-    return filterAndLimit(matches, 'updated_at', -1, this._logger)[0];
+    return filterAndLimit(matches, 'updated_at', -1)[0];
   }
   return returnAll ? matches : matches[0];
 }

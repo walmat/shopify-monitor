@@ -58,7 +58,7 @@ class Monitor {
     this._proxy = proxy;
 
     this._request = request.defaults({
-      timeout: 10000,
+      timeout: 20000,
       jar: request.jar(),
     });
 
@@ -111,6 +111,7 @@ class Monitor {
   }
 
   async _handleParsingErrors(errors) {
+    console.log(errors);
     let delayStatus;
     let ban = true; // assume we have a softban
     let hardBan = false; // assume we don't have a hardban
@@ -126,6 +127,7 @@ class Monitor {
         delayStatus = status; // find the first error that is either a product not found or 4xx response
       }
     });
+    console.log(ban, hardBan);
     if (ban || hardBan) {
       // we can assume that it's a soft ban by default since it's either ban || hardBan
       const shouldBan = hardBan ? 2 : 1;
@@ -138,15 +140,14 @@ class Monitor {
   }
 
   async _filter(products) {
-    let _products = products;
     // filter out errors
-    _products = _products.filter(p => p.status === 'resolved');
+    const _products = products.filter(p => p.status === 'resolved');
+
     // no parsing resolve correctly, let's retry..
     if (!_products.length) {
       return { nextState: States.Parse };
     }
 
-    // TODO: There has to be a better way to do this.. :/
     // filter out any similar results (based on the url?)
     const productMap = {};
     _products.forEach(result => {
@@ -185,7 +186,7 @@ class Monitor {
     return productMapping;
   }
 
-  _parseAll() {
+  async _parseAll() {
     const parserData = {};
     parserData.keywords = this._dataGroups.map(({ id, keywords }) => ({
       ...keywords,
@@ -209,6 +210,7 @@ class Monitor {
       // Try parsing all files and wait for all responses (either rejected or resolved)
       products = await this._parseAll();
     } catch (errors) {
+      console.log(errors);
       return this._handleParsingErrors(errors);
     }
 
@@ -235,13 +237,13 @@ class Monitor {
             // check stock data
           } else {
             // it's a newly found product, emit the event
-            monitorInfo.products.push(newProduct);
             this._events.emit(
               MonitorEvents.NotifyProduct,
               newProduct,
               'Release',
               monitorInfo.webhooks,
             );
+            monitorInfo.products.push(newProduct);
           }
         });
       });
@@ -253,7 +255,6 @@ class Monitor {
 
   async _handleParse() {
     const { nextState } = await this._monitorKeywords();
-    console.log(`[DEBUG]: next state from handle parse: ${nextState}`);
     return nextState;
   }
 
