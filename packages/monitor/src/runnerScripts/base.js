@@ -96,41 +96,8 @@ class MonitorContextTransformer {
         target: 'main',
         event: '__done',
       });
-    });
-  }
-
-  /**
-   * Start the Monitor
-   *
-   * This is a convenience method to group all functions necessary
-   * with starting/running a monitor. Transformers can just await this
-   * method instead of having to copy the body of this method.
-   *
-   * @param {array} args - arguments needed to create a Monitor instance
-   */
-  async _start(args) {
-    const monitor = new Monitor(...args);
-    if (!monitor) {
-      // Return early if we couldn't create the monitor
-      return;
-    }
-
-    this._wireEvents(monitor);
-    await monitor.start();
-    monitor._events.removeAllListeners();
-  }
-
-  /**
-   * Notify the main context that an error occurred
-   *
-   * @param {Error} error
-   */
-  _errorTransformer(error) {
-    const { stack, message, filename, lineno } = error;
-    this.send({
-      target: 'main',
-      event: '__error',
-      error: { stack, message, filename, lineno },
+      // Reset the started flag so another job can be received
+      this._started = false;
     });
   }
 
@@ -145,7 +112,7 @@ class MonitorContextTransformer {
    *
    * @param {Monitor} monitor - instance on which events will be attached
    */
-  _wireEvents(monitor) {
+  wireEvents(monitor) {
     this.receive((target, event, args, next) => {
       // Only respond to events meant for the child context
       if (target !== this._contextName) {
@@ -179,6 +146,41 @@ class MonitorContextTransformer {
           args,
         });
       });
+    });
+  }
+
+  /**
+   * Start the Monitor
+   *
+   * This is a convenience method to group all functions necessary
+   * with starting/running a monitor. Transformers can just await this
+   * method instead of having to copy the body of this method.
+   *
+   * @param {array} args - arguments needed to create a Monitor instance
+   */
+  async _start(args) {
+    const monitor = new Monitor(...args);
+    if (!monitor) {
+      // Return early if we couldn't create the monitor
+      return;
+    }
+
+    this.wireEvents(monitor);
+    await monitor.start();
+    monitor._events.removeAllListeners();
+  }
+
+  /**
+   * Notify the main context that an error occurred
+   *
+   * @param {Error} error
+   */
+  _errorTransformer(error) {
+    const { stack, message, filename, lineno } = error;
+    this.send({
+      target: 'main',
+      event: '__error',
+      error: { stack, message, filename, lineno },
     });
   }
 }
