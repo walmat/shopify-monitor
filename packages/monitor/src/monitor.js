@@ -1,6 +1,5 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
-
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
 const { delay, reflect, getCurrencyForSite } = require('./utils/constants').Utils;
 const { States, Events: MonitorEvents } = require('./utils/constants').Monitor;
@@ -181,18 +180,18 @@ class Monitor {
     }
 
     // filter out errors
-    const _products = products.filter(p => p.status === 'resolved');
-    console.log(`[DEBUG]: %d parser resolved`, _products.length);
+    products = products.filter(p => p.status === 'resolved');
+    console.log(`[DEBUG]: %d parser resolved`, products.length);
 
     // no parsing resolve correctly, let's exit early, wait, and retry..
-    if (!_products.length) {
+    if (!products.length) {
       await delay(this._errorDelay);
       return States.Parse;
     }
 
     // filter out any similar results (based on the products url)
     const productMap = {};
-    _products.forEach(result => {
+    products.forEach(result => {
       result.v.forEach(product => {
         product.matches.forEach(p => {
           if (p && p.url && !productMap[p.url]) {
@@ -209,7 +208,7 @@ class Monitor {
       });
     });
 
-    // update fetched products context no matter what
+    // update fetched products mapping context no matter what
     this._fetchedProducts = productMap;
     console.log(`[DEBUG]: Waiting %d ms`, this._monitorDelay);
     await delay(this._monitorDelay);
