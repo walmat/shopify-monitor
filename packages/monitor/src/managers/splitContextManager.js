@@ -107,44 +107,34 @@ class SplitContextManager extends Manager {
     };
 
     // Generate handlers for each event
-    [
-      ManagerEvents.Abort,
-      ManagerEvents.SendProxy,
-      ManagerEvents.AddMonitorData,
-      ManagerEvents.RemoveMonitorData,
-    ].forEach(event => {
-      let handler;
-      switch (event) {
-        case ManagerEvents.SendProxy: {
-          const sideEffects = (id, proxy) => {
-            this._monitors[id].proxy = proxy;
-          };
-          handler = handlerGenerator(MonitorEvents.ReceiveProxy, sideEffects);
-          break;
+    [ManagerEvents.Abort, ManagerEvents.AddMonitorData, ManagerEvents.RemoveMonitorData].forEach(
+      event => {
+        let handler;
+        switch (event) {
+          case ManagerEvents.AddMonitorData: {
+            const sideEffects = (id, data) => {
+              this._monitors[id].monitorIds.push(data.id);
+            };
+            handler = handlerGenerator(ManagerEvents.AddMonitorData, sideEffects);
+            break;
+          }
+          case ManagerEvents.RemoveMonitorData: {
+            const sideEffects = (id, data) => {
+              this._monitors[id].monitorIds = this._monitors[id].monitorIds.filter(id !== data.id);
+            };
+            handler = handlerGenerator(ManagerEvents.RemoveMonitorData, sideEffects);
+            break;
+          }
+          default: {
+            handler = handlerGenerator(event, null);
+            break;
+          }
         }
-        case ManagerEvents.AddMonitorData: {
-          const sideEffects = (id, data) => {
-            this._monitors[id].monitorIds.push(data.id);
-          };
-          handler = handlerGenerator(ManagerEvents.AddMonitorData, sideEffects);
-          break;
-        }
-        case ManagerEvents.RemoveMonitorData: {
-          const sideEffects = (id, data) => {
-            this._monitors[id].monitorIds = this._monitors[id].monitorIds.filter(id !== data.id);
-          };
-          handler = handlerGenerator(ManagerEvents.RemoveMonitorData, sideEffects);
-          break;
-        }
-        default: {
-          handler = handlerGenerator(event, null);
-          break;
-        }
-      }
 
-      handlers[event] = handler;
-      this._events.on(event, handler, this);
-    });
+        handlers[event] = handler;
+        this._events.on(event, handler, this);
+      },
+    );
     // Store handlers for cleanup
     this._handlers[mId] = handlers;
 

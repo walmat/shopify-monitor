@@ -47,7 +47,6 @@ const headers = ({ url }) => ({
 
 const ManagerEvents = {
   Abort: 'ABORT',
-  SendProxy: 'SEND_PROXY',
   AddMonitorData: 'ADD_MONITOR_DATA',
   RemoveMonitorData: 'REMOVE_MONITOR_DATA',
   UpdateMonitorData: 'UPDATE_MONITOR_DATA',
@@ -65,7 +64,6 @@ const MonitorStates = {
 
 const MonitorEvents = {
   SwapProxy: 'SWAP_PROXY',
-  ReceiveProxy: 'RECEIVE_PROXY',
   NotifyProduct: 'NOTIFY_PRODUCT',
 };
 

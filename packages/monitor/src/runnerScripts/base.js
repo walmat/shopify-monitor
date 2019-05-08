@@ -154,10 +154,6 @@ class MonitorContextTransformer {
 
       // Only handle certain events
       switch (event) {
-        case ManagerEvents.SendProxy: {
-          monitor._events.emit(MonitorEvents.ReceiveProxy, ...args);
-          break;
-        }
         case ManagerEvents.AddMonitorData:
         case ManagerEvents.RemoveMonitorData:
         case ManagerEvents.Abort: {
