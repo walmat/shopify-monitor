@@ -21,6 +21,10 @@ class Monitor {
     return this._proxy;
   }
 
+  get workerQueue() {
+    return this._workerQueue;
+  }
+
   constructor(id, data, proxies) {
     /**
      * @type {String} the id of the monitor process
@@ -74,11 +78,13 @@ class Monitor {
     this._currency = getCurrencyForSite(data.site);
     this._fetchedProducts = {};
     this._productMapping = {};
+    this._workerQueue = [];
 
     this._state = States.Start;
 
     // TODO: handle proper abort
-    this._events.on(ManagerEvents.Abort, () => {}, this);
+    // eslint-disable-next-line no-return-assign
+    this._events.on(ManagerEvents.Abort, () => (this._state = States.Stop), this);
     this._events.on(ManagerEvents.AddMonitorData, this._handleAddMonitorData, this);
     this._events.on(ManagerEvents.RemoveMonitorData, this._handleRemoveMonitorData, this);
     this._events.on(ManagerEvents.UpdateMonitorData, this._handleUpdateMonitorData, this);
@@ -174,15 +180,9 @@ class Monitor {
       return this._handleParsingErrors(errors);
     }
 
-    // if we received no response with no errors somehow, let's try again.
-    if (!products.length) {
-      console.log(`[DEBUG]: no products matched`);
-      return States.Parse;
-    }
-
     // filter out errors
     const _products = products.filter(p => p.status === 'resolved');
-    console.log(`[DEBUG]: %d filtered product resolved`, _products.length);
+    console.log(`[DEBUG]: %d parser resolved`, _products.length);
 
     // no parsing resolve correctly, let's exit early, wait, and retry..
     if (!_products.length) {
@@ -197,6 +197,13 @@ class Monitor {
         product.matches.forEach(p => {
           if (p && p.url && !productMap[p.url]) {
             productMap[p.url] = { monitorInfoId: product.monitorInfoId, product: p };
+
+            // check to see if the worker queue doesn't already contain that product waiting to be fetched
+            if (!this._workerQueue.some(worker => worker.product.url === p.url)) {
+              console.log(`[DEBUG]: Adding %s to worker queue context now...`, p.url);
+              // TODO: Spawn a new worker context here instead of just pushing it to the queue
+              this._workerQueue.push(productMap[p.url]);
+            }
           }
         });
       });
@@ -204,7 +211,9 @@ class Monitor {
 
     // update fetched products context no matter what
     this._fetchedProducts = productMap;
-    return States.Filter;
+    console.log(`[DEBUG]: Waiting %d ms`, this._monitorDelay);
+    await delay(this._monitorDelay);
+    return States.Parse;
   }
 
   async _handleFilter() {
@@ -404,8 +413,6 @@ class Monitor {
       // eslint-disable-next-line no-await-in-loop
       stop = await this.run();
     }
-
-    this._cleanup();
   }
 }
 
