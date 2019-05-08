@@ -93,7 +93,6 @@ class SplitContextManager extends Manager {
           next();
         }
         const eventHandlerMap = {
-          [MonitorEvents.SwapProxy]: this.handleProxySwap,
           [MonitorEvents.NotifyProduct]: this.handleNotifyProduct,
         };
 
