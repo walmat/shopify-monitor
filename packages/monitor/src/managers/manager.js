@@ -2,7 +2,6 @@ const EventEmitter = require('eventemitter3');
 const shortid = require('shortid');
 
 const Monitor = require('../monitor');
-const ProxyManager = require('../proxy');
 const WebhookManager = require('../hooks/manager');
 const { Events } = require('../utils/constants').Manager;
 
@@ -12,23 +11,8 @@ class Manager {
 
     this._monitors = {};
     this._handlers = {};
-    this._proxyManager = new ProxyManager();
     this._webhookManager = new WebhookManager();
-
     this._store = store;
-  }
-
-  /**
-   * Handler for emitting the swapped proxy event
-   * @param {String} id - monitor id that is listening on the event
-   * @param {Object} proxy - old proxy being used
-   * @param {Boolean} shouldBan - whether or not we should ban the old proxy
-   */
-  async handleProxySwap(id, proxy, shouldBan) {
-    const proxyId = proxy ? proxy.id : null;
-    const { site } = this._monitors[id];
-    const newProxy = await this._proxyManager.swap(proxyId, site, shouldBan);
-    this._events.emit(Events.SendProxy, id, newProxy);
   }
 
   async handleNotifyProduct(product, type, webhooks) {
@@ -63,14 +47,12 @@ class Manager {
    * Handler for setting up any pre-requisites for the monitor process
    * @param {String} site - store to setup the monitoring process for
    */
-  async setup(site) {
-    // TODO: find matching stores somehow and group them together
+  async setup() {
     let id;
     do {
       id = shortid.generate();
     } while (this._monitors[id]);
-    const openProxy = await this._proxyManager.reserve(site);
-    return { id, openProxy };
+    return { id };
   }
 
   /**
@@ -78,11 +60,7 @@ class Manager {
    * @param {String} id - store id
    */
   cleanup(id) {
-    const { proxy, site } = this._monitors[id];
     delete this._monitors[id];
-    if (proxy) {
-      this._proxyManager.release(proxy.id, site, true);
-    }
   }
 
   /**
@@ -112,13 +90,9 @@ class Manager {
       return;
     }
 
-    // TODO: Setup proper subscriptions in datastore instead of pulling proxies everytime!
-    const proxies = await this._store.proxies.browse();
-    this._proxyManager.registerAll(proxies.map(p => p.value));
+    const { id } = await this.setup(data.site.url);
 
-    const { id, openProxy } = await this.setup(data.site.url);
-
-    this._start([id, data, openProxy]).then(() => {
+    this._start([id, data]).then(() => {
       this.cleanup(id);
     });
   }
@@ -239,20 +213,12 @@ class Manager {
     // Generate Handlers for each event
     [
       Events.Abort,
-      Events.SendProxy,
       Events.AddMonitorData,
       Events.RemoveMonitorData,
       Events.UpdateMonitorData,
     ].forEach(event => {
       let handler;
       switch (event) {
-        case Events.SendProxy: {
-          const sideEffects = (id, proxy) => {
-            this._monitors[id].proxy = proxy;
-          };
-          handler = handlerGenerator(Monitor.Events.ReceiveProxy, sideEffects);
-          break;
-        }
         case Events.AddMonitorData: {
           const sideEffects = (id, data) => {
             this._monitors[id].monitorIds.push(data.id);
@@ -277,7 +243,6 @@ class Manager {
     });
     this._handlers[monitor.id] = handlers;
 
-    monitor._events.on(Monitor.Events.SwapProxy, this.handleProxySwap, this);
     monitor._events.on(Monitor.Events.NotifyProduct, this.handleNotifyProduct, this);
   }
 
@@ -293,7 +258,6 @@ class Manager {
 
     [
       Events.Abort,
-      Events.SendProxy,
       Events.AddMonitorData,
       Events.RemoveMonitorData,
       Events.UpdateMonitorData,
@@ -305,13 +269,16 @@ class Manager {
   /**
    * :: PRIVATE ::
    * Handler for starting a monitor process
-   * @param {List} param0 [monitor id, monitor data, proxy]
+   * @param {List} param0 [monitor id, monitor data]
    */
-  async _start([id, data, proxy]) {
-    const monitor = new Monitor(id, data, proxy);
+  async _start([id, data]) {
+    const monitor = new Monitor(id, data);
 
     // monitor.site = monitor.site.url;
     this._monitors[id] = monitor;
+    // TODO: Setup proper subscriptions in datastore instead of pulling proxies everytime!
+    const proxies = await this._store.proxies.browse();
+    monitor._proxyManager.registerAll(proxies.map(p => p.value));
 
     this._setup(monitor);
 

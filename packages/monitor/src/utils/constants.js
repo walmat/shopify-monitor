@@ -58,8 +58,8 @@ const MonitorStates = {
   Parse: 'PARSE',
   Filter: 'FILTER',
   Process: 'PROCESS',
-  Compare: 'COMPARE',
   SwapProxies: 'SWAP_PROXIES',
+  Error: 'ERROR',
   Stop: 'STOP',
 };
 

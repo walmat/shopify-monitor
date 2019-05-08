@@ -6,6 +6,7 @@ const { delay, reflect, getCurrencyForSite } = require('./utils/constants').Util
 const { States, Events: MonitorEvents } = require('./utils/constants').Monitor;
 const { AtomParser, JsonParser, XmlParser, Parser } = require('./parsers');
 const Product = require('./product');
+const ProxyManager = require('./proxy');
 
 class Monitor {
   get state() {
@@ -20,7 +21,7 @@ class Monitor {
     return this._proxy;
   }
 
-  constructor(id, data, proxy) {
+  constructor(id, data) {
     /**
      * @type {String} the id of the monitor process
      */
@@ -50,12 +51,13 @@ class Monitor {
      * split contexts
      */
     this._events = new EventEmitter();
+    this._proxyManager = new ProxyManager();
 
     /**
      * @type {List<MonitorInfo>} (see @structures/src/definitions/monitorInfo.js)
      */
     this._dataGroups = [data];
-    this._proxy = proxy;
+    this._proxy = null; // set this to null when constructing, assigned when starting
 
     this._request = request.defaults({
       family: 4, // needed for worker_threads context to use proper `requests` node version
@@ -81,23 +83,21 @@ class Monitor {
   }
 
   async swapProxies() {
-    // emit the swap event
-    this._events.emit(MonitorEvents.SwapProxy, this.id, this.proxy, this.shouldBanProxy);
+    const oldProxyId = this._proxy ? this._proxy.id : null;
     return new Promise((resolve, reject) => {
-      let timeout;
-      const proxyHandler = (id, proxy) => {
+      let timeout = setTimeout(() => {
+        if (timeout) {
+          reject(new Error('Proxy Swapping Timed Out!'));
+        }
+      }, 10000);
+
+      const newProxy = this._proxyManager.swap(oldProxyId, this._site, this._shouldBanProxy);
+      if (newProxy) {
         clearTimeout(timeout);
         timeout = null;
-        this.shouldBanProxy = 0;
-        resolve(proxy);
-      };
-      timeout = setTimeout(() => {
-        this._events.removeListener(MonitorEvents.ReceiveProxy, proxyHandler);
-        if (timeout) {
-          reject(new Error('Timeout'));
-        }
-      }, 10000); // TODO: Make this a variable delay?
-      this._events.once(MonitorEvents.ReceiveProxy, proxyHandler);
+        this._shouldBanProxy = 0;
+        resolve(newProxy);
+      }
     });
   }
 
@@ -134,11 +134,8 @@ class Monitor {
     console.log(`[DEBUG]: Hard Banned?: %j Soft Banned?: %j`, hardBan, ban);
     if (ban || hardBan) {
       // we can assume that it's a soft ban by default since it's either ban || hardBan
-      const shouldBan = hardBan ? 2 : 1;
-      return {
-        shouldBan,
-        nextState: States.SwapProxies,
-      };
+      this._shouldBanProxy = hardBan ? 2 : 1;
+      return States.SwapProxies;
     }
     return this._delay(delayStatus || 404);
   }
@@ -300,7 +297,7 @@ class Monitor {
       if (newProxy) {
         const { proxy } = newProxy;
         this._proxy = proxy;
-        this.shouldBanProxy = 0; // reset ban flag
+        this._shouldBanProxy = 0; // reset ban flag
         return this._prevState;
       }
       await delay(this._errorDelay);
@@ -375,6 +372,7 @@ class Monitor {
     try {
       nextState = await this._handleState(this._state);
     } catch (error) {
+      console.log(error);
       nextState = States.Error;
     }
 
@@ -392,6 +390,10 @@ class Monitor {
   async start() {
     this._prevState = States.Parse;
     this._state = States.Parse;
+
+    // assign the proxy
+    this._proxy = this._proxyManager.reserve(this._site);
+
     let stop = false;
     while (this._state !== States.Stop && !stop) {
       // eslint-disable-next-line no-await-in-loop
