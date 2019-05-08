@@ -7,6 +7,7 @@ import {
 } from 'graphql';
 
 import { VariantType, VariantInputType } from './variant';
+import { WebhookNotificationType, WebhookNotificationInputType } from './webhookNotification';
 
 export const ProductType = new GraphQLObjectType({
   name: 'Product',
@@ -44,6 +45,14 @@ export const ProductType = new GraphQLObjectType({
       type: GraphQLNonNull(GraphQLString),
       description: 'Timestamp when this product was matched',
     },
+    notifiedWebhooks: {
+      type: GraphQLNonNull(GraphQLList(WebhookNotificationType)),
+      description: 'Webhooks that were notified of this product',
+    },
+    monitorInfoId: {
+      type: GraphQLNonNull(GraphQLString),
+      description: 'Id of the monitor info that matched this product',
+    },
   }),
 });
 
@@ -78,6 +87,14 @@ export const ProductInputType = new GraphQLInputObjectType({
     timestamp: {
       type: GraphQLString,
       description: 'Timestamp when this product was matched',
+    },
+    notifiedWebhooks: {
+      type: GraphQLList(WebhookNotificationInputType),
+      description: 'Webhooks that were notified of this product',
+    },
+    monitorInfoId: {
+      type: GraphQLString,
+      description: 'Id of the monitor info that matched this product',
     },
   }),
 });

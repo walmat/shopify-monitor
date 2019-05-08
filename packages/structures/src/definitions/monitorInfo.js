@@ -1,6 +1,7 @@
 import PropTypes from 'prop-types';
 
 import site from './site';
+import product from './product';
 import keywordInfo from './keywordInfo';
 
 // Monitor Info Definition
@@ -27,4 +28,11 @@ export default PropTypes.shape({
 
   // Delay (in ms) to wait when error occurs in monitor cycles
   errorDelay: PropTypes.number.isRequired,
+
+  // Array of products that are found for that monitor instance
+  // NOTE: This is optional and is only used by the monitor package to track stock changes
+  products: PropTypes.arrayOf(product),
+
+  // Array of webhooks that should be notified when matched products change
+  webhooks: PropTypes.arrayOf(site).isRequired,
 });

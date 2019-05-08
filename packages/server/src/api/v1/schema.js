@@ -4,6 +4,7 @@ import {
   GraphQLObjectType,
   GraphQLString,
   GraphQLSchema,
+  GraphQLBoolean,
 } from 'graphql';
 
 import * as structures from '@monitor/structures';
@@ -304,6 +305,28 @@ const mutation = new GraphQLObjectType({
         },
       },
       resolve: (root, { id, data }) => root.editMonitor(id, data),
+    },
+    startMonitor: {
+      type: GraphQLBoolean,
+      description: 'Start a Monitor',
+      args: {
+        monitorInfoId: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'Id of the monitor info to start',
+        },
+      },
+      resolve: (root, { monitorInfoId }) => root.startMonitor(monitorInfoId),
+    },
+    stopMonitor: {
+      type: GraphQLBoolean,
+      description: 'Stop a Monitor',
+      args: {
+        monitorInfoId: {
+          type: GraphQLNonNull(GraphQLString),
+          description: 'Id of the monitor info to stop',
+        },
+      },
+      resolve: (root, { monitorInfoId }) => root.stopMonitor(monitorInfoId),
     },
   }),
 });

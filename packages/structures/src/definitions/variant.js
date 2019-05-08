@@ -7,4 +7,7 @@ export default PropTypes.shape({
 
   // Size associated with this variant
   size: PropTypes.string.isRequired,
+
+  // Whether or not the variant is in stock
+  inStock: PropTypes.bool.isRequired,
 });

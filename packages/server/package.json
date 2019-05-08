@@ -8,7 +8,7 @@
     "start": "yarn run dev",
     "dev": "cross-env NODE_ENV=development yarn run dev:nodemon",
     "dev:nodemon": "nodemon --config nodemon.json",
-    "dev:node": "node dist/server.js",
+    "dev:node": "node --experimental-worker dist/server.js",
     "build": "babel --root-mode upward --no-comments -d dist src/",
     "heroku-postbuild": "yarn --production=false && yarn workspaces run build",
     "postinstall": "yarn run build",
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@monitor/datastore": "0.1.0",
+    "@monitor/monitor": "1.0.0",
     "@monitor/structures": "0.1.0",
     "cors": "^2.8.5",
     "dotenv": "^7.0.0",

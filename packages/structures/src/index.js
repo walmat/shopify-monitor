@@ -6,6 +6,7 @@ import settingsDefn from './definitions/settings';
 import siteDefn from './definitions/site';
 import variantDefn from './definitions/variant';
 import webhookGroupDefn from './definitions/webhookGroup';
+import webhookNotificationDefn from './definitions/webhookNotification';
 
 import {
   KeywordInfoType,
@@ -19,6 +20,10 @@ import { SettingsType, SettingsInputType } from './graphql/settings';
 import { SiteType, SiteInputType } from './graphql/site';
 import { VariantType, VariantInputType } from './graphql/variant';
 import { WebhookGroupType, WebhookGroupInputType } from './graphql/webhookGroup';
+import {
+  WebhookNotificationType,
+  WebhookNotificationInputType,
+} from './graphql/webhookNotification';
 
 import keywordInfoState from './initialStates/keywordInfo';
 import monitorInfoState from './initialStates/monitorInfo';
@@ -28,6 +33,7 @@ import settingsState from './initialStates/settings';
 import siteState from './initialStates/site';
 import variantState from './initialStates/variant';
 import webhookGroupState from './initialStates/webhookGroup';
+import webhookNotificationState from './initialStates/webhookNotification';
 
 import buildKeywordInfo from './utils/buildKeywordInfo';
 import buildProxyInfo from './utils/buildProxy';
@@ -41,6 +47,7 @@ const definitions = {
   siteDefn,
   variantDefn,
   webhookGroupDefn,
+  webhookNotificationDefn,
 };
 const graphql = {
   KeywordInfoType,
@@ -61,6 +68,8 @@ const graphql = {
   VariantInputType,
   WebhookGroupType,
   WebhookGroupInputType,
+  WebhookNotificationType,
+  WebhookNotificationInputType,
 };
 const initialStates = {
   keywordInfoState,
@@ -71,6 +80,7 @@ const initialStates = {
   siteState,
   variantState,
   webhookGroupState,
+  webhookNotificationState,
 };
 const utils = { buildKeywordInfo, buildProxyInfo };
 

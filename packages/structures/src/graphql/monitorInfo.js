@@ -4,6 +4,7 @@ import {
   GraphQLNonNull,
   GraphQLString,
   GraphQLInt,
+  GraphQLList,
 } from 'graphql';
 
 import { SiteType, SiteInputType } from './site';
@@ -12,6 +13,7 @@ import {
   KeywordInfoDataInputType,
   KeywordInfoStringInputType,
 } from './keywordInfo';
+import { ProductType, ProductInputType } from './product';
 
 export const MonitorInfoType = new GraphQLObjectType({
   name: 'MonitorInfo',
@@ -44,6 +46,14 @@ export const MonitorInfoType = new GraphQLObjectType({
     errorDelay: {
       type: GraphQLNonNull(GraphQLInt),
       description: 'delay (in ms) to wait when error occurs in monitor cycles',
+    },
+    products: {
+      type: GraphQLList(ProductType),
+      description: 'products matched with this monitor info (optional)',
+    },
+    webhooks: {
+      type: GraphQLNonNull(GraphQLList(SiteType)),
+      description: 'webhooks that will be notified when matched products change',
     },
   }),
 });
@@ -79,6 +89,14 @@ export const MonitorInfoInputType = new GraphQLInputObjectType({
     errorDelay: {
       type: GraphQLInt,
       description: 'delay (in ms) to wait when error occurs in monitor cycles',
+    },
+    products: {
+      type: GraphQLList(ProductInputType),
+      description: 'matched products with this monitor info',
+    },
+    webhooks: {
+      type: GraphQLList(SiteInputType),
+      description: 'webhooks that will be notified when matched products are updated',
     },
   }),
 });
