@@ -4,11 +4,11 @@ const path = require('path');
 const SplitContextManager = require('./splitContextManager');
 
 class ProcessContext {
-  constructor(mId, data, proxy) {
+  constructor(mId, data, proxies) {
     this.id = mId;
     this.monitorIds = [data.id];
     this.site = data.site;
-    this.proxy = proxy;
+    this.proxies = proxies;
     this._name = 'Child Process';
     this._target = 'child';
     this._child = childProcess.fork(path.resolve(__dirname, '../runnerScripts/process.js'));

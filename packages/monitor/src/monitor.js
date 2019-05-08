@@ -21,7 +21,7 @@ class Monitor {
     return this._proxy;
   }
 
-  constructor(id, data) {
+  constructor(id, data, proxies) {
     /**
      * @type {String} the id of the monitor process
      */
@@ -57,7 +57,8 @@ class Monitor {
      * @type {List<MonitorInfo>} (see @structures/src/definitions/monitorInfo.js)
      */
     this._dataGroups = [data];
-    this._proxy = null; // set this to null when constructing, assigned when starting
+    this._proxies = proxies;
+    this._proxy = this._proxyManager.reserve(this._site);
 
     this._request = request.defaults({
       family: 4, // needed for worker_threads context to use proper `requests` node version
@@ -390,9 +391,6 @@ class Monitor {
   async start() {
     this._prevState = States.Parse;
     this._state = States.Parse;
-
-    // assign the proxy
-    this._proxy = this._proxyManager.reserve(this._site);
 
     let stop = false;
     while (this._state !== States.Stop && !stop) {

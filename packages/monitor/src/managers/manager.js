@@ -52,7 +52,8 @@ class Manager {
     do {
       id = shortid.generate();
     } while (this._monitors[id]);
-    return { id };
+    const proxies = await this._store.proxies.browse();
+    return { id, proxies };
   }
 
   /**
@@ -90,9 +91,9 @@ class Manager {
       return;
     }
 
-    const { id } = await this.setup(data.site.url);
+    const { id, proxies } = await this.setup(data.site.url);
 
-    this._start([id, data]).then(() => {
+    this._start([id, data, proxies]).then(() => {
       this.cleanup(id);
     });
   }
@@ -271,14 +272,11 @@ class Manager {
    * Handler for starting a monitor process
    * @param {List} param0 [monitor id, monitor data]
    */
-  async _start([id, data]) {
-    const monitor = new Monitor(id, data);
+  async _start([id, data, proxies]) {
+    const monitor = new Monitor(id, data, proxies);
 
     // monitor.site = monitor.site.url;
     this._monitors[id] = monitor;
-    // TODO: Setup proper subscriptions in datastore instead of pulling proxies everytime!
-    const proxies = await this._store.proxies.browse();
-    monitor._proxyManager.registerAll(proxies.map(p => p.value));
 
     this._setup(monitor);
 

@@ -155,8 +155,8 @@ class SplitContextManager extends Manager {
     });
   }
 
-  async _start([id, data, proxy]) {
-    const monitorContext = this._ContextCtor(id, data, proxy);
+  async _start([id, data, proxies]) {
+    const monitorContext = this._ContextCtor(id, data, proxies);
     this._monitors[id] = monitorContext;
 
     this._setup(monitorContext);
@@ -166,7 +166,7 @@ class SplitContextManager extends Manager {
       monitorContext.send({
         target: monitorContext.target,
         event: '__start',
-        args: [id, data, proxy],
+        args: [id, data, proxies],
       });
       await new Promise((resolve, reject) => {
         // create handler reference so we can clean it up later
