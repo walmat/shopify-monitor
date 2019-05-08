@@ -3,7 +3,7 @@ const request = require('request-promise');
 
 const { Events: ManagerEvents } = require('./utils/constants').Manager;
 const { delay, reflect, getCurrencyForSite } = require('./utils/constants').Utils;
-const { States, Events: MonitorEvents, ErrorCodes } = require('./utils/constants').Monitor;
+const { States, Events: MonitorEvents } = require('./utils/constants').Monitor;
 const { AtomParser, JsonParser, XmlParser, Parser } = require('./parsers');
 const Product = require('./product');
 
@@ -58,16 +58,19 @@ class Monitor {
     this._proxy = proxy;
 
     this._request = request.defaults({
-      family: 4,
-      timeout: 20000,
-      jar: request.jar(),
+      family: 4, // needed for worker_threads context to use proper `requests` node version
+      timeout: 20000, // default the timeout 20s (this may be overrode in any request)
+      jar: request.jar(), // default cookie jar to use for all requests
     });
 
     this._currency = getCurrencyForSite(data.site);
+    this._fetchedProducts = {};
+    this._productMapping = {};
 
     this._state = States.Start;
 
-    this._events.on(ManagerEvents.Abort, this._handleAbort, this);
+    // TODO: handle proper abort
+    this._events.on(ManagerEvents.Abort, () => {}, this);
     this._events.on(ManagerEvents.AddMonitorData, this._handleAddMonitorData, this);
     this._events.on(ManagerEvents.RemoveMonitorData, this._handleRemoveMonitorData, this);
     this._events.on(ManagerEvents.UpdateMonitorData, this._handleUpdateMonitorData, this);
@@ -109,8 +112,7 @@ class Monitor {
         break;
     }
     await delay(timeout);
-
-    return { nextState: States.Parse };
+    return this._prevState;
   }
 
   async _handleParsingErrors(errors) {
@@ -141,55 +143,6 @@ class Monitor {
     return this._delay(delayStatus || 404);
   }
 
-  async _filter(products) {
-    // filter out errors
-    const _products = products.filter(p => p.status === 'resolved');
-    console.log(`[DEBUG]: %d filtered product resolved`, _products.length);
-
-    // no parsing resolve correctly, let's retry..
-    if (!_products.length) {
-      return { nextState: States.Parse };
-    }
-
-    // filter out any similar results (based on the url?)
-    const productMap = {};
-    _products.forEach(result => {
-      result.v.forEach(product => {
-        product.matches.forEach(p => {
-          if (p && p.url && !productMap[p.url]) {
-            productMap[p.url] = { monitorInfoId: product.monitorInfoId, product: p };
-          }
-        });
-      });
-    });
-
-    // get full product data for remaining results
-    const inStockProducts = await Promise.all(
-      Object.values(productMap).map(({ monitorInfoId, product: p }) =>
-        (async () => {
-          // TODO: we need a way to swap proxies midway here? or something a bit nicer
-          const product = await Parser.getFullProductInfo(p.url, this._currency, this._request);
-          return {
-            monitorInfoId,
-            product,
-          };
-        })(),
-      ),
-    );
-
-    const productMapping = {};
-    inStockProducts.forEach(prods => {
-      const { monitorInfoId, product } = prods;
-      if (productMapping[monitorInfoId]) {
-        productMapping[monitorInfoId].push(product);
-      } else {
-        productMapping[monitorInfoId] = [product];
-      }
-    });
-
-    return productMapping;
-  }
-
   async _parseAll() {
     const parserData = {};
     parserData.keywords = this._dataGroups.map(({ id, keywords }) => ({
@@ -208,7 +161,7 @@ class Monitor {
     return Promise.all(parsers);
   }
 
-  async _monitorKeywords() {
+  async _handleParse() {
     let products;
     try {
       // Try parsing all files and wait for all responses (either rejected or resolved)
@@ -221,18 +174,75 @@ class Monitor {
     // if we received no response with no errors somehow, let's try again.
     if (!products.length) {
       console.log(`[DEBUG]: no products matched`);
-      return { nextState: States.Parse };
+      return States.Parse;
     }
 
-    console.log(`[DEBUG]: %d products matched`, products.length);
+    // filter out errors
+    const _products = products.filter(p => p.status === 'resolved');
+    console.log(`[DEBUG]: %d filtered product resolved`, _products.length);
 
-    const productMapping = await this._filter(products);
+    // no parsing resolve correctly, let's exit early, wait, and retry..
+    if (!_products.length) {
+      await delay(this._errorDelay);
+      return States.Parse;
+    }
 
-    console.log(`[DEBUG]: %d products after filtering`, Object.values(productMapping).length);
+    // filter out any similar results (based on the products url)
+    const productMap = {};
+    _products.forEach(result => {
+      result.v.forEach(product => {
+        product.matches.forEach(p => {
+          if (p && p.url && !productMap[p.url]) {
+            productMap[p.url] = { monitorInfoId: product.monitorInfoId, product: p };
+          }
+        });
+      });
+    });
 
-    // send to manager at this point?
-    if (productMapping) {
-      Object.entries(productMapping).forEach(([monitorInfoId, val]) => {
+    // update fetched products context no matter what
+    this._fetchedProducts = productMap;
+    return States.Filter;
+  }
+
+  async _handleFilter() {
+    // if we have fetched products...
+    if (this._fetchedProducts) {
+      // get full product data for remaining results
+      const inStockProducts = await Promise.all(
+        Object.values(this._fetchedProducts).map(({ monitorInfoId, product: p }) =>
+          (async () => {
+            // TODO: we need a way to swap proxies midway here? or something a bit nicer
+            const product = await Parser.getFullProductInfo(p.url, this._currency, this._request);
+            return {
+              monitorInfoId,
+              product,
+            };
+          })(),
+        ),
+      );
+
+      const productMapping = {};
+      inStockProducts.forEach(prods => {
+        const { monitorInfoId, product } = prods;
+        if (productMapping[monitorInfoId]) {
+          productMapping[monitorInfoId].push(product);
+        } else {
+          productMapping[monitorInfoId] = [product];
+        }
+      });
+
+      // update global products mapping
+      this._productMapping = productMapping;
+      return States.Process;
+    }
+    // otherwise, go back to previous step and try to find products
+    return States.Parse;
+  }
+
+  async _handleProductComparison() {
+    // if we have our product mapping...
+    if (this._productMapping) {
+      Object.entries(this._productMapping).forEach(([monitorInfoId, val]) => {
         const monitorInfo = this._dataGroups.find(d => d.id === monitorInfoId);
 
         val.forEach(p => {
@@ -272,16 +282,14 @@ class Monitor {
           }
         });
       });
-    }
-    console.log(`[DEBUG]: Waiting %d ms`, this._monitorDelay);
-    await delay(this._monitorDelay);
-    console.log(`[DEBUG]: Continuing monitor...`);
-    return { nextState: States.Parse };
-  }
 
-  async _handleParse() {
-    const { nextState } = await this._monitorKeywords();
-    return nextState;
+      // after processing, clear out the mapping, wait for our delay, and parse again
+      this._productMapping = {};
+      await delay(this._monitorDelay);
+      return States.Parse;
+    }
+    // if we don't have our product mapping, go back to get it...
+    return States.Filter;
   }
 
   async _handleSwapProxy() {
@@ -302,11 +310,7 @@ class Monitor {
     return this._prevState;
   }
 
-  // eslint-disable-next-line class-methods-use-this
-  _handleAbort() {
-    return States.Stop;
-  }
-
+  // MARK: Manager ~ Monitor Event Functions
   _handleAddMonitorData(_, data) {
     const existingDataGroup = this._dataGroups.find(d => d.id === data.id);
     if (!existingDataGroup) {
@@ -343,6 +347,7 @@ class Monitor {
     }
   }
 
+  // MARK: State Machine Logic
   async _handleState(state) {
     async function defaultHandler() {
       throw new Error('Reached Unknown State!');
@@ -350,14 +355,12 @@ class Monitor {
 
     const StateMap = {
       [States.Parse]: this._handleParse,
+      [States.Filter]: this._handleFilter,
+      [States.Process]: this._handleProductComparison,
       [States.SwapProxies]: this._handleSwapProxy,
-      [States.Abort]: this._handleAbort,
-      [States.Error]: () => {
-        return States.Stop;
-      },
-      [States.Stop]: () => {
-        return States.Stop;
-      },
+      [States.Abort]: () => States.Stop,
+      [States.Error]: () => States.Stop,
+      [States.Stop]: () => States.Stop,
     };
 
     const handler = StateMap[state] || defaultHandler;
@@ -367,7 +370,7 @@ class Monitor {
   async run() {
     let nextState = this._state;
 
-    console.log('[DEBUG]: Handling state: %s', this._state);
+    console.log('[DEBUG]: Handling state: %j', this._state);
 
     try {
       nextState = await this._handleState(this._state);
@@ -375,7 +378,7 @@ class Monitor {
       nextState = States.Error;
     }
 
-    console.log('[DEBUG]: Transitioning to state: %s', nextState);
+    console.log('[DEBUG]: Transitioning to state: %j', nextState);
 
     if (this._state !== nextState) {
       this._prevState = this._state;
@@ -385,6 +388,7 @@ class Monitor {
     return false;
   }
 
+  // MARK: Entry point for spawning new monitors
   async start() {
     this._prevState = States.Parse;
     this._state = States.Parse;

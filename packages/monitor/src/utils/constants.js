@@ -56,6 +56,8 @@ const ManagerEvents = {
 const MonitorStates = {
   Start: 'START',
   Parse: 'PARSE',
+  Filter: 'FILTER',
+  Process: 'PROCESS',
   Compare: 'COMPARE',
   SwapProxies: 'SWAP_PROXIES',
   Stop: 'STOP',
