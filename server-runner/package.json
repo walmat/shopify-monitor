@@ -1,0 +1,14 @@
+{
+  "name": "@monitor/server-runner",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "yarn workspace @monitor/server run start"
+  },
+  "dependencies": {
+    "cross-env": "^5.2.0",
+    "nodemon": "^1.18.10"
+  }
+}

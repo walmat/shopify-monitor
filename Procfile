@@ -1,1 +1,1 @@
-web: yarn workspace @monitor/server run start
+web: yarn workspace @monitor/server-runner run start
