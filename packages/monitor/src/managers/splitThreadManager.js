@@ -11,7 +11,7 @@ class ThreadContext {
     this.site = data.site;
     this._name = 'Child Thread';
     this._target = 'child';
-    this._worker = new Worker(path.resolve(__dirname, '../runnerScripts/thread.js'));
+    this._worker = new Worker(path.resolve(__dirname, '../runnerScripts/indexThread.js'));
   }
 
   get name() {

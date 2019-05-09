@@ -10,7 +10,7 @@ class ProcessContext {
     this.site = data.site;
     this._name = 'Child Process';
     this._target = 'child';
-    this._child = childProcess.fork(path.resolve(__dirname, '../runnerScripts/process.js'));
+    this._child = childProcess.fork(path.resolve(__dirname, '../runnerScripts/indexProcess.js'));
 
     this.isExitPayload = () => true;
   }

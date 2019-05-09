@@ -1,5 +1,5 @@
 /* eslint class-methods-use-this: ["error", { "exceptMethods": ["send"] }] */
-const MonitorContextTransformer = require('./base');
+const MonitorContextTransformer = require('./indexBase');
 
 class MonitorProcessTransformer extends MonitorContextTransformer {
   constructor(contextName = 'child') {
