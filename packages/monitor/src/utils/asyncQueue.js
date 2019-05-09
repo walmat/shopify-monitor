@@ -47,6 +47,25 @@ class AsyncQueue {
     return this._backlog.length;
   }
 
+  find(filterFunc) {
+    // Search the backlog for the first instance that returns true from the provided filter function,
+
+    if (!filterFunc) {
+      // no filter func passed, so we can't find anything
+      return null;
+    }
+
+    // Loop through in reverse, since the higher index items are the first items the get added to the backlog
+    for (let i = this._backlog.length - 1; i >= 0; i -= 1) {
+      const datum = this._backlog[i];
+      if (filterFunc.call(null, datum)) {
+        return datum;
+      }
+    }
+
+    return null;
+  }
+
   next() {
     // initialize request
     const nextRequest = {
