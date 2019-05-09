@@ -1,5 +1,5 @@
 const Manager = require('./managers/manager');
-const Monitor = require('./monitor');
+const Monitor = require('./monitors/monitor');
 const SplitProcessManager = require('./managers/splitProcessManager');
 const SplitThreadManager = require('./managers/splitThreadManager');
 

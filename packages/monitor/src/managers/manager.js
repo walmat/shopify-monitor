@@ -1,8 +1,8 @@
 const EventEmitter = require('eventemitter3');
 const shortid = require('shortid');
 
-const Monitor = require('../monitor');
-const WebhookManager = require('../hooks/manager');
+const Monitor = require('../monitors/monitor');
+const { WebhookManager } = require('../hooks');
 const { Events } = require('../utils/constants').Manager;
 
 class Manager {

@@ -1,6 +1,6 @@
 /* eslint class-methods-use-this: ["error", { "exceptMethods": ["wireErrors", "send", "receive"] }] */
 const constants = require('../utils/constants');
-const Monitor = require('../monitor');
+const Monitor = require('../monitors/monitor');
 
 const ManagerEvents = constants.Manager.Events;
 const MonitorEvents = constants.Monitor.Events;

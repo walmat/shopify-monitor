@@ -1,11 +1,11 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
-const { Events: ManagerEvents } = require('./utils/constants').Manager;
-const { delay, reflect, getCurrencyForSite } = require('./utils/constants').Utils;
-const { States, Events: MonitorEvents } = require('./utils/constants').Monitor;
-const { AtomParser, JsonParser, XmlParser, Parser } = require('./parsers');
-const Product = require('./product');
-const ProxyManager = require('./proxyManager');
+const { Events: ManagerEvents } = require('../utils/constants').Manager;
+const { delay, reflect, getCurrencyForSite } = require('../utils/constants').Utils;
+const { States, Events: MonitorEvents } = require('../utils/constants').Monitor;
+const { AtomParser, JsonParser, XmlParser, Parser } = require('../parsers');
+const Product = require('../product');
+const ProxyManager = require('../proxyManager');
 
 class Monitor {
   get state() {
@@ -101,7 +101,6 @@ class Monitor {
           reject(new Error('Proxy Swapping Timed Out!'));
         }
       }, 10000);
-
       const newProxy = await this._proxyManager.swap(oldProxyId, this._site, this._shouldBanProxy);
       if (newProxy) {
         clearTimeout(timeout);
