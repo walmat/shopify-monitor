@@ -193,24 +193,37 @@ class Monitor {
     const productMap = {};
     products.forEach(result => {
       result.v.forEach(product => {
+        // Check to see if existing monitor data exists (just in case it was removed asynchronously)
+        const { monitorInfoId } = product;
+        const monitorInfo = this._dataGroups[monitorInfoId];
+        if (!monitorInfo) {
+          // Monitor data group was removed by the time we fetched this product, so we should not continue with the data
+          return;
+        }
         product.matches.forEach(p => {
           if (p && p.url && !productMap[p.url]) {
-            productMap[p.url] = { monitorInfoId: product.monitorInfoId, product: p };
-
+            // Set a flag in our productMap to prevent duplicate products from appearing
+            productMap[p.url] = true;
             // check to see if the worker queue doesn't already contain that product waiting to be fetched
             if (!this._workerQueue.find(workerData => workerData.product.url === p.url)) {
               console.log(`[DEBUG]: Adding %s to worker queue context now...`, p.url);
               // TODO: Spawn a new worker context here instead of just pushing it to the queue
+              // Check for previously tracked product so we can tell if we are updating or adding a new product
+              const existingProduct = monitorInfo.products.find(existing => existing.url === p.url);
+              const productToInsert = existingProduct || p;
+              const type = existingProduct ? 'update' : 'add';
               // Insert product into the worker queue so we can fetch it asynchronously
-              this._workerQueue.insert(productMap[p.url]);
+              this._workerQueue.insert({
+                monitorInfoId,
+                product: productToInsert,
+                type,
+              });
             }
           }
         });
       });
     });
 
-    // update fetched products mapping context no matter what
-    this._fetchedProducts = productMap;
     console.log(`[DEBUG]: Waiting %d ms`, this._monitorDelay);
     await delay(this._monitorDelay);
     return States.Parse;
