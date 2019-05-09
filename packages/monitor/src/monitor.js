@@ -6,7 +6,7 @@ const { delay, reflect, getCurrencyForSite } = require('./utils/constants').Util
 const { States, Events: MonitorEvents } = require('./utils/constants').Monitor;
 const { AtomParser, JsonParser, XmlParser, Parser } = require('./parsers');
 const Product = require('./product');
-const ProxyManager = require('./proxy');
+const ProxyManager = require('./proxyManager');
 
 class Monitor {
   get state() {
@@ -57,8 +57,13 @@ class Monitor {
      * @type {List<MonitorInfo>} (see @structures/src/definitions/monitorInfo.js)
      */
     this._dataGroups = [data];
+
+    /**
+     * Proxy related variables
+     */
     this._proxies = proxies;
-    this._proxy = this._proxyManager.reserve(this._site);
+    this._shouldBanProxy = 0;
+    this._proxy = null; // TODO: where do i call `this.intializeProxy()`?
 
     this._request = request.defaults({
       family: 4, // needed for worker_threads context to use proper `requests` node version
@@ -83,16 +88,22 @@ class Monitor {
     this._events.emit(MonitorEvents.NotifyProduct, product, type, webhooks);
   }
 
+  async initializeProxy() {
+    if (!this._proxy) {
+      this._proxy = await this._proxyManager.register(this._site);
+    }
+  }
+
   async swapProxies() {
     const oldProxyId = this._proxy ? this._proxy.id : null;
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       let timeout = setTimeout(() => {
         if (timeout) {
           reject(new Error('Proxy Swapping Timed Out!'));
         }
       }, 10000);
 
-      const newProxy = this._proxyManager.swap(oldProxyId, this._site, this._shouldBanProxy);
+      const newProxy = await this._proxyManager.swap(oldProxyId, this._site, this._shouldBanProxy);
       if (newProxy) {
         clearTimeout(timeout);
         timeout = null;

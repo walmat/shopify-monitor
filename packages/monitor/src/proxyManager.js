@@ -64,7 +64,7 @@ class ProxyManager {
     this._proxies.delete(stored.id);
   }
 
-  reserve(site, wait = false, timeout = 5) {
+  async reserve(site, wait = false, timeout = 5) {
     let newTimeout = timeout;
     if (!newTimeout || Number.isNaN(newTimeout) || newTimeout < 0) {
       newTimeout = 0;
@@ -106,13 +106,13 @@ class ProxyManager {
     }
   }
 
-  swap(id, site, banFlag = 0) {
+  async swap(id, site, banFlag = 0) {
     let release = true;
 
     const old = this._proxies.get(id);
     if (!old) release = false;
 
-    const newProxy = this.reserve(site);
+    const newProxy = await this.reserve(site);
     if (!newProxy) return null;
 
     if (banFlag > 0) {

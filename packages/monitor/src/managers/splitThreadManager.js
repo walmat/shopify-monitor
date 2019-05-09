@@ -5,11 +5,10 @@ const { Worker } = require('worker_threads');
 const SplitContextManager = require('./splitContextManager');
 
 class ThreadContext {
-  constructor(mId, data, proxies) {
+  constructor(mId, data) {
     this.id = mId;
     this.monitorIds = [data.id];
     this.site = data.site;
-    this.proxies = proxies;
     this._name = 'Child Thread';
     this._target = 'child';
     this._worker = new Worker(path.resolve(__dirname, '../runnerScripts/thread.js'));
