@@ -154,10 +154,6 @@ class MonitorContextTransformer {
 
       // Only handle certain events
       switch (event) {
-        case ManagerEvents.SendProxy: {
-          monitor._events.emit(MonitorEvents.ReceiveProxy, ...args);
-          break;
-        }
         case ManagerEvents.AddMonitorData:
         case ManagerEvents.RemoveMonitorData:
         case ManagerEvents.Abort: {
@@ -175,7 +171,7 @@ class MonitorContextTransformer {
     });
 
     // Forward Monitor Events to the Main Process
-    [MonitorEvents.SwapProxy, MonitorEvents.NotifyProduct].forEach(event => {
+    [MonitorEvents.NotifyProduct].forEach(event => {
       monitor._events.on(event, (...args) => {
         this.send({
           target: 'main',

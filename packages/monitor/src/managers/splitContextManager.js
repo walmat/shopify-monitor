@@ -93,7 +93,6 @@ class SplitContextManager extends Manager {
           next();
         }
         const eventHandlerMap = {
-          [MonitorEvents.SwapProxy]: this.handleProxySwap,
           [MonitorEvents.NotifyProduct]: this.handleNotifyProduct,
         };
 
@@ -107,44 +106,34 @@ class SplitContextManager extends Manager {
     };
 
     // Generate handlers for each event
-    [
-      ManagerEvents.Abort,
-      ManagerEvents.SendProxy,
-      ManagerEvents.AddMonitorData,
-      ManagerEvents.RemoveMonitorData,
-    ].forEach(event => {
-      let handler;
-      switch (event) {
-        case ManagerEvents.SendProxy: {
-          const sideEffects = (id, proxy) => {
-            this._monitors[id].proxy = proxy;
-          };
-          handler = handlerGenerator(MonitorEvents.ReceiveProxy, sideEffects);
-          break;
+    [ManagerEvents.Abort, ManagerEvents.AddMonitorData, ManagerEvents.RemoveMonitorData].forEach(
+      event => {
+        let handler;
+        switch (event) {
+          case ManagerEvents.AddMonitorData: {
+            const sideEffects = (id, data) => {
+              this._monitors[id].monitorIds.push(data.id);
+            };
+            handler = handlerGenerator(ManagerEvents.AddMonitorData, sideEffects);
+            break;
+          }
+          case ManagerEvents.RemoveMonitorData: {
+            const sideEffects = (id, data) => {
+              this._monitors[id].monitorIds = this._monitors[id].monitorIds.filter(id !== data.id);
+            };
+            handler = handlerGenerator(ManagerEvents.RemoveMonitorData, sideEffects);
+            break;
+          }
+          default: {
+            handler = handlerGenerator(event, null);
+            break;
+          }
         }
-        case ManagerEvents.AddMonitorData: {
-          const sideEffects = (id, data) => {
-            this._monitors[id].monitorIds.push(data.id);
-          };
-          handler = handlerGenerator(ManagerEvents.AddMonitorData, sideEffects);
-          break;
-        }
-        case ManagerEvents.RemoveMonitorData: {
-          const sideEffects = (id, data) => {
-            this._monitors[id].monitorIds = this._monitors[id].monitorIds.filter(id !== data.id);
-          };
-          handler = handlerGenerator(ManagerEvents.RemoveMonitorData, sideEffects);
-          break;
-        }
-        default: {
-          handler = handlerGenerator(event, null);
-          break;
-        }
-      }
 
-      handlers[event] = handler;
-      this._events.on(event, handler, this);
-    });
+        handlers[event] = handler;
+        this._events.on(event, handler, this);
+      },
+    );
     // Store handlers for cleanup
     this._handlers[mId] = handlers;
 
@@ -166,8 +155,8 @@ class SplitContextManager extends Manager {
     });
   }
 
-  async _start([id, data, proxy]) {
-    const monitorContext = this._ContextCtor(id, data, proxy);
+  async _start([id, data, proxies]) {
+    const monitorContext = this._ContextCtor(id, data, proxies);
     this._monitors[id] = monitorContext;
 
     this._setup(monitorContext);
@@ -177,7 +166,7 @@ class SplitContextManager extends Manager {
       monitorContext.send({
         target: monitorContext.target,
         event: '__start',
-        args: [id, data, proxy],
+        args: [id, data, proxies],
       });
       await new Promise((resolve, reject) => {
         // create handler reference so we can clean it up later
