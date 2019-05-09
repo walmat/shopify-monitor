@@ -18,7 +18,19 @@ class Resolver {
   constructor() {
     this._settingsId = null;
     if (process.env.MONITOR_DATASOURCE === Datasources.redis) {
-      this.store = new RedisStore(process.env.REDIS_URL);
+      let connectArgs = [];
+      // heroku defined .env variable
+      if (process.env.REDIS_URL) {
+        connectArgs = [process.env.REDIS_URL];
+      } else {
+        connectArgs = [
+          {
+            host: process.env.MONITOR_REDIS_HOST || '127.0.0.1',
+            port: process.env.MONITOR_REDIS_PORT || '6379',
+          },
+        ];
+      }
+      this.store = new RedisStore(...connectArgs);
     } else {
       this.store = new MemoryStore();
     }
