@@ -1,6 +1,7 @@
 const EventEmitter = require('eventemitter3');
 const request = require('request-promise');
 const { Events: ManagerEvents } = require('../utils/constants').Manager;
+const AsyncQueue = require('../utils/asyncQueue');
 const { delay, reflect, getCurrencyForSite } = require('../utils/constants').Utils;
 const { States, Events: MonitorEvents } = require('../utils/constants').Monitor;
 const { AtomParser, JsonParser, XmlParser, Parser } = require('../parsers');
@@ -77,7 +78,7 @@ class Monitor {
     this._currency = getCurrencyForSite(data.site);
     this._fetchedProducts = {};
     this._productMapping = {};
-    this._workerQueue = [];
+    this._workerQueue = new AsyncQueue();
 
     this._state = States.Start;
 
@@ -197,10 +198,11 @@ class Monitor {
             productMap[p.url] = { monitorInfoId: product.monitorInfoId, product: p };
 
             // check to see if the worker queue doesn't already contain that product waiting to be fetched
-            if (!this._workerQueue.some(worker => worker.product.url === p.url)) {
+            if (!this._workerQueue.find(workerData => workerData.product.url === p.url)) {
               console.log(`[DEBUG]: Adding %s to worker queue context now...`, p.url);
               // TODO: Spawn a new worker context here instead of just pushing it to the queue
-              this._workerQueue.push(productMap[p.url]);
+              // Insert product into the worker queue so we can fetch it asynchronously
+              this._workerQueue.insert(productMap[p.url]);
             }
           }
         });
