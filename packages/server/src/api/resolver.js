@@ -18,10 +18,7 @@ class Resolver {
   constructor() {
     this._settingsId = null;
     if (process.env.MONITOR_DATASOURCE === Datasources.redis) {
-      this.store = new RedisStore({
-        host: process.env.MONITOR_REDIS_HOST,
-        port: process.env.MONITOR_REDIS_PORT,
-      });
+      this.store = new RedisStore(process.env.REDIS_URL);
     } else {
       this.store = new MemoryStore();
     }
