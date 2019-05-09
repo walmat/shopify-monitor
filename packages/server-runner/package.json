@@ -5,7 +5,8 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "start": "yarn workspace @monitor/server run start"
+    "start": "yarn workspace @monitor/server run start",
+    "build": "exit 0"
   },
   "dependencies": {
     "cross-env": "^5.2.0",
