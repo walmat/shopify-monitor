@@ -402,7 +402,8 @@ class Monitor {
   async start() {
     this._prevState = States.Parse;
     this._state = States.Parse;
-this._proxy = await this._proxyManager.reserve(this._proxies);
+
+    this._proxy = await this._proxyManager.reserve(this._proxies);
 
     let stop = false;
     while (this._state !== States.Stop && !stop) {
