@@ -39,7 +39,7 @@
     "eslint-plugin-react": "^7.11.1",
     "jest": "^23.6.0",
     "prettier": "^1.16.4",
-    "yarn": "^1.12.3"
+    "yarn": "^1.22.0"
   },
   "dependencies": {
     "@babel/runtime": "^7.4.3"
